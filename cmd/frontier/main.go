@@ -20,6 +20,7 @@ func run() int {
 		ErrorOutputPaths: []string{"stderr"},
 		Encoding:         "json",
 		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:     "msg",
 			TimeKey:        "time",
 			LevelKey:       "severity",
 			LineEnding:     zapcore.DefaultLineEnding,
