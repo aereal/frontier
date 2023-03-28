@@ -50,13 +50,21 @@ func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) 
 		if !errors.As(err, &notFoundErr) {
 			return err
 		}
-		out, err := d.client.CreateFunction(ctx, fn.toCreateInput())
+		input, err := fn.toCreateInput()
+		if err != nil {
+			return err
+		}
+		out, err := d.client.CreateFunction(ctx, input)
 		if err != nil {
 			return err
 		}
 		etag = out.ETag
 	} else {
-		out, err := d.client.UpdateFunction(ctx, fn.toUpdateInput(existing.ETag))
+		input, err := fn.toUpdateInput(existing.ETag)
+		if err != nil {
+			return err
+		}
+		out, err := d.client.UpdateFunction(ctx, input)
 		if err != nil {
 			return err
 		}
