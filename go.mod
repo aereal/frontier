@@ -1,6 +1,6 @@
 module github.com/aereal/frontier
 
-go 1.20
+go 1.19
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.19
