@@ -50,3 +50,41 @@ jobs:
         with:
           name: coverage
       - uses: k1LoW/octocov-action@v0.47.2
+  determine_release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      will_release: ${{ steps.determine_release.outputs.new_release_published }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: determine_release
+        uses: cycjimmy/semantic-release-action@v3.4.0
+        with:
+          dry_run: true
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - lint
+      - determine_release
+    if: ${{ needs.determine_release.outputs.will_release }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cycjimmy/semantic-release-action@v3.4.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.20.x'
+          cache: true
+      - uses: goreleaser/goreleaser-action@v4.2.0
+        with:
+          version: v1.16.2
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
