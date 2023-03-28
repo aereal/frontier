@@ -10,12 +10,10 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		os.Exit(1)
-	}
+	os.Exit(run())
 }
 
-func run() error {
+func run() int {
 	logger, err := zap.Config{
 		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
 		OutputPaths:      []string{"stderr"},
@@ -31,13 +29,14 @@ func run() error {
 		},
 	}.Build()
 	if err != nil {
-		return err
+		return 1
 	}
 	defer func() {
 		_ = logger.Sync()
 	}()
 	if err := cli.New(logger, os.Stdin, os.Stdout, os.Stderr).Run(context.Background(), os.Args); err != nil {
-		return err
+		logger.Error(err.Error(), zap.Error(err))
+		return 1
 	}
-	return nil
+	return 0
 }
