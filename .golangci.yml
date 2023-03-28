@@ -1,0 +1,40 @@
+---
+
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - bodyclose
+    - containedctx
+    - decorder
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - godox
+    - goerr113
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacebloat
+    - ireturn
+    - makezero
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - reassign
+    - staticcheck
+    - tenv
+    - thelper
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
