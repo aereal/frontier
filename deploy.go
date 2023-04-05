@@ -1,3 +1,5 @@
+//go:generate go run github.com/golang/mock/mockgen -package frontier_test -destination mock_cloudfront_client_test.go github.com/aereal/frontier CloudFrontClient
+
 package frontier
 
 import (
