@@ -49,7 +49,7 @@ jobs:
       - uses: actions/download-artifact@v3.0.2
         with:
           name: coverage
-      - uses: k1LoW/octocov-action@v0.47.2
+      - uses: k1LoW/octocov-action@v0.47.3
   determine_release:
     permissions:
       contents: write
