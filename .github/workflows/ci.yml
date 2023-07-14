@@ -86,7 +86,7 @@ jobs:
         with:
           go-version: '1.20.x'
           cache: true
-      - uses: goreleaser/goreleaser-action@v4.2.0
+      - uses: goreleaser/goreleaser-action@v4.3.0
         with:
           version: v1.16.2
           args: release
