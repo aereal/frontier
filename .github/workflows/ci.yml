@@ -8,7 +8,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.5.3
+      - uses: actions/checkout@v3.6.0
       - name: lint
         uses: reviewdog/action-golangci-lint@v2.3.6
         with:
@@ -23,7 +23,7 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3.5.3
+      - uses: actions/checkout@v3.6.0
       - uses: actions/setup-go@v4.0.0
         with:
           go-version: ${{ matrix.go_version }}
@@ -45,7 +45,7 @@ jobs:
     needs:
       - test
     steps:
-      - uses: actions/checkout@v3.5.3
+      - uses: actions/checkout@v3.6.0
       - uses: actions/download-artifact@v3.0.2
         with:
           name: coverage
