@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.33.0
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.6.0
-	github.com/urfave/cli/v2 v2.25.7
+	github.com/urfave/cli/v2 v2.27.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.48.0
 	go.opentelemetry.io/otel v1.23.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.23.1
