@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/aereal/frontier"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -16,19 +17,16 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 type App struct {
-	base   *cliv2.App
-	logger *zap.Logger
+	base *cliv2.App
 }
 
 const tracerName = "github.com/aereal/frontier/internal/cli"
 
-func New(logger *zap.Logger, input io.Reader, out, errOut io.Writer) *App {
+func New(input io.Reader, out, errOut io.Writer) *App {
 	app := &App{
-		logger: zap.NewNop(),
 		base: &cliv2.App{
 			Reader:    input,
 			Writer:    out,
@@ -42,7 +40,7 @@ func New(logger *zap.Logger, input io.Reader, out, errOut io.Writer) *App {
 				ctx := cliCtx.Context
 				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
 				if err != nil {
-					logger.Warn("failed to setup otlptracegrpc", zap.Error(err))
+					slog.WarnContext(ctx, "failed to setup otlptracegrpc", slog.String("error", err.Error()))
 					return nil
 				}
 				res := resource.NewWithAttributes(
@@ -65,15 +63,12 @@ func New(logger *zap.Logger, input io.Reader, out, errOut io.Writer) *App {
 				tp, ok := otel.GetTracerProvider().(interface{ Shutdown(context.Context) error })
 				if ok {
 					if err := tp.Shutdown(ctx); err != nil {
-						logger.Warn("failed to shutdown tracer provider", zap.Error(err))
+						slog.WarnContext(ctx, "failed to shutdown tracer provider", slog.String("error", err.Error()))
 					}
 				}
 				return nil
 			},
 		},
-	}
-	if logger != nil {
-		app.logger = logger
 	}
 	cmdDeploy := &cliv2.Command{
 		Name:   "deploy",
@@ -113,7 +108,7 @@ func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
 	client := cloudfront.NewFromConfig(cfg)
 	configPath := cliCtx.Path(flagConfigPath.Name)
 	doPublish := cliCtx.Bool(flagPublish.Name)
-	deployer := frontier.NewDeployer(client, a.logger)
+	deployer := frontier.NewDeployer(client)
 	return deployer.Deploy(ctx, configPath, doPublish)
 }
 
