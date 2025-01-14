@@ -2,4 +2,4 @@
 
 package frontier
 
-import _ "github.com/golang/mock/mockgen"
+import _ "go.uber.org/mock/mockgen"
