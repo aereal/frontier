@@ -17,12 +17,13 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - '1.20.x'
-          - '1.21.x'
-          - '1.22.x'
-        os:
-          - ubuntu-latest
-    runs-on: ${{ matrix.os }}
+          - stable
+          - oldstable
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -32,25 +33,8 @@ jobs:
       - run: go mod download
       - name: test
         run: go test -v -race -coverprofile=cover.out ./...
-      - uses: actions/upload-artifact@v3.1.3
-        with:
-          name: coverage
-          path: ./cover.out
-          if-no-files-found: error
-  report-coverage:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      pull-requests: write
-    needs:
-      - test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3.0.2
-        with:
-          name: coverage
       - uses: k1LoW/octocov-action@v0.56.3
+        if: ${{ matrix.go_version == 'stable' }}
   determine_release:
     permissions:
       contents: write
@@ -85,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: stable
           cache: true
       - uses: goreleaser/goreleaser-action@v4
         with:
