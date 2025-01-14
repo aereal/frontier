@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -package frontier_test -destination mock_cloudfront_client_test.go github.com/aereal/frontier CloudFrontClient
+//go:generate go run go.uber.org/mock/mockgen -typed -package frontier_test -destination mock_cloudfront_client_test.go github.com/aereal/frontier CloudFrontClient
 
 package frontier
 
