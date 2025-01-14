@@ -8,13 +8,13 @@ import (
 )
 
 type Function struct {
-	Name   string
-	Code   *FunctionCode
-	Config *FunctionConfig
+	Name   string          `yaml:"name"`
+	Code   *FunctionCode   `yaml:"code"`
+	Config *FunctionConfig `yaml:"config"`
 }
 
 type FunctionCode struct {
-	Path string
+	Path string `yaml:"path"`
 }
 
 func (f *Function) toCreateInput() (*cloudfront.CreateFunctionInput, error) {
@@ -49,6 +49,6 @@ func (fn *Function) toUpdateInput(etag *string) (*cloudfront.UpdateFunctionInput
 }
 
 type FunctionConfig struct {
-	Comment string
-	Runtime types.FunctionRuntime
+	Comment string                `yaml:"comment"`
+	Runtime types.FunctionRuntime `yaml:"runtime"`
 }
