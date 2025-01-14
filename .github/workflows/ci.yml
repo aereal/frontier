@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: lint
-        uses: reviewdog/action-golangci-lint@v2.3.6
+        uses: reviewdog/action-golangci-lint@v2
         with:
           golangci_lint_flags: '--config=.golangci.yml'
   test:
