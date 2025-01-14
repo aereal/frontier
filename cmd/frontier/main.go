@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 
 	"github.com/aereal/frontier/internal/cli"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -14,29 +13,11 @@ func main() {
 }
 
 func run() int {
-	logger, err := zap.Config{
-		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
-		Encoding:         "json",
-		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey:     "msg",
-			TimeKey:        "time",
-			LevelKey:       "severity",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.MillisDurationEncoder,
-		},
-	}.Build()
-	if err != nil {
-		return 1
-	}
-	defer func() {
-		_ = logger.Sync()
-	}()
-	if err := cli.New(logger, os.Stdin, os.Stdout, os.Stderr).Run(context.Background(), os.Args); err != nil {
-		logger.Error(err.Error(), zap.Error(err))
+	sh := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{})
+	sl := slog.New(sh)
+	slog.SetDefault(sl)
+	if err := cli.New(os.Stdin, os.Stdout, os.Stderr).Run(context.Background(), os.Args); err != nil {
+		slog.Error(err.Error(), slog.String("error", err.Error()))
 		return 1
 	}
 	return 0

@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,14 +21,10 @@ type CloudFrontClient interface {
 
 type Deployer struct {
 	client CloudFrontClient
-	logger *zap.Logger
 }
 
-func NewDeployer(client CloudFrontClient, logger *zap.Logger) *Deployer {
-	d := &Deployer{client: client, logger: zap.NewNop()}
-	if logger != nil {
-		d.logger = logger
-	}
+func NewDeployer(client CloudFrontClient) *Deployer {
+	d := &Deployer{client: client}
 	return d
 }
 
