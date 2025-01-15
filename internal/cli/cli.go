@@ -75,8 +75,16 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 		Flags:  []cliv2.Flag{flagConfigPath, flagPublish},
 		Action: app.actionDeploy,
 	}
-	instrumentTrace(cmdDeploy)
-	app.base.Commands = append(app.base.Commands, cmdDeploy)
+	cmdRender := &cliv2.Command{
+		Name:        "render",
+		Flags:       []cliv2.Flag{flagConfigPath},
+		Description: "render resolved function config",
+		Action:      app.actionRender,
+	}
+	app.base.Commands = append(app.base.Commands, cmdDeploy, cmdRender)
+	for _, c := range app.base.Commands {
+		instrumentTrace(c)
+	}
 	return app
 }
 
@@ -110,6 +118,12 @@ func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
 	doPublish := cliCtx.Bool(flagPublish.Name)
 	deployer := frontier.NewDeployer(client)
 	return deployer.Deploy(ctx, configPath, doPublish)
+}
+
+func (a *App) actionRender(cliCtx *cliv2.Context) error {
+	configPath := cliCtx.Path(flagConfigPath.Name)
+	renderer := frontier.NewRenderer(configPath, cliCtx.App.Writer)
+	return renderer.Render(cliCtx.Context)
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {

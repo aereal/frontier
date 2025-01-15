@@ -5,11 +5,9 @@ package frontier
 import (
 	"context"
 	"errors"
-	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
-	"gopkg.in/yaml.v3"
 )
 
 type CloudFrontClient interface {
@@ -29,14 +27,8 @@ func NewDeployer(client CloudFrontClient) *Deployer {
 }
 
 func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) error {
-	f, err := os.Open(configPath)
+	fn, err := parseConfigFromPath(configPath)
 	if err != nil {
-		return err
-	}
-	defer f.Close()
-	dec := yaml.NewDecoder(f)
-	fn := new(Function)
-	if err := dec.Decode(fn); err != nil {
 		return err
 	}
 

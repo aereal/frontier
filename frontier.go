@@ -1,20 +1,35 @@
 package frontier
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	"gopkg.in/yaml.v3"
 )
 
+func parseConfigFromPath(configPath string) (*Function, error) {
+	f, err := os.Open(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("os.Open: %w", err)
+	}
+	defer f.Close()
+	fn := new(Function)
+	if err := yaml.NewDecoder(f).Decode(fn); err != nil {
+		return nil, fmt.Errorf("yaml.Decoder.Decode: %w", err)
+	}
+	return fn, nil
+}
+
 type Function struct {
-	Name   string
-	Code   *FunctionCode
-	Config *FunctionConfig
+	Name   string          `yaml:"name"`
+	Code   *FunctionCode   `yaml:"code"`
+	Config *FunctionConfig `yaml:"config"`
 }
 
 type FunctionCode struct {
-	Path string
+	Path string `yaml:"path"`
 }
 
 func (f *Function) toCreateInput() (*cloudfront.CreateFunctionInput, error) {
@@ -49,6 +64,6 @@ func (fn *Function) toUpdateInput(etag *string) (*cloudfront.UpdateFunctionInput
 }
 
 type FunctionConfig struct {
-	Comment string
-	Runtime types.FunctionRuntime
+	Comment string                `yaml:"comment"`
+	Runtime types.FunctionRuntime `yaml:"runtime"`
 }
