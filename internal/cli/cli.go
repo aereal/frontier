@@ -31,8 +31,15 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 			Reader:    input,
 			Writer:    out,
 			ErrWriter: errOut,
-			Flags:     []cliv2.Flag{flagOtelTrace, flagOtelTraceEndpoint},
+			Flags:     []cliv2.Flag{flagOtelTrace, flagOtelTraceEndpoint, flagLogLevel},
 			Before: func(cliCtx *cliv2.Context) error {
+				if level := getLogLevel(cliCtx); level != slog.LevelInfo {
+					lh := &leveledHandler{
+						level: level, Handler: slog.Default().Handler(),
+					}
+					slog.SetDefault(slog.New(lh))
+				}
+
 				endpoint := cliCtx.String(flagOtelTraceEndpoint.Name)
 				ctx := cliCtx.Context
 				if endpoint == "" {
@@ -108,6 +115,11 @@ var (
 			return nil
 		},
 	}
+	flagLogLevel = &cliv2.GenericFlag{
+		Name:  "log-level",
+		Usage: "specify minimum log level. accepts valid [slog.Level] string representation.",
+		Value: &logLevel{slog.LevelInfo},
+	}
 	flagConfigPath = &cliv2.PathFlag{
 		Name:  "config",
 		Usage: "config file path",
@@ -156,4 +168,36 @@ func instrumentTrace(cmd *cliv2.Command) {
 		span.End()
 		return nil
 	}
+}
+
+type logLevel struct {
+	slog.Level
+}
+
+var _ cliv2.Generic = (*logLevel)(nil)
+
+func (l *logLevel) Set(v string) error {
+	if err := l.Level.UnmarshalText([]byte(v)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getLogLevel(cliCtx *cliv2.Context) slog.Level {
+	ll, ok := cliCtx.Generic(flagLogLevel.Name).(*logLevel)
+	if ok {
+		return ll.Level
+	}
+	return slog.LevelInfo
+}
+
+type leveledHandler struct {
+	slog.Handler
+	level slog.Level
+}
+
+var _ slog.Handler = (*leveledHandler)(nil)
+
+func (h *leveledHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.level
 }
