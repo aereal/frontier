@@ -31,14 +31,18 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 			Reader:    input,
 			Writer:    out,
 			ErrWriter: errOut,
-			Flags:     []cliv2.Flag{flagOtelTrace},
+			Flags:     []cliv2.Flag{flagOtelTrace, flagOtelTraceEndpoint},
 			Before: func(cliCtx *cliv2.Context) error {
-				if !cliCtx.Bool(flagOtelTrace.Name) {
-					return nil
+				endpoint := cliCtx.String(flagOtelTraceEndpoint.Name)
+				ctx := cliCtx.Context
+				if endpoint == "" {
+					if !cliCtx.Bool(flagOtelTrace.Name) {
+						return nil
+					}
+					endpoint = defaultOtelTraceEndpoint
 				}
 
-				ctx := cliCtx.Context
-				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
+				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
 				if err != nil {
 					slog.WarnContext(ctx, "failed to setup otlptracegrpc", slog.String("error", err.Error()))
 					return nil
@@ -89,10 +93,20 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 }
 
 var (
+	defaultOtelTraceEndpoint = "localhost:4317"
+
+	flagOtelTraceEndpoint = &cliv2.StringFlag{
+		Name:  "otel-trace-endpoint",
+		Usage: "an endpoint (such as localhost:4317) to send OpenTelemetry traces. an empty value indicates no trace should be sent.",
+	}
 	flagOtelTrace = &cliv2.BoolFlag{
 		Name:  "otel-trace",
-		Usage: "enable OpenTelemetry traces",
+		Usage: "Deprecated: use --otel-trace-endpoint. enable OpenTelemetry traces.",
 		Value: false,
+		Action: func(ctx *cliv2.Context, b bool) error {
+			slog.WarnContext(ctx.Context, "--otel-trace option is deprecated. use --otel-trace-endpoint")
+			return nil
+		},
 	}
 	flagConfigPath = &cliv2.PathFlag{
 		Name:  "config",
