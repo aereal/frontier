@@ -2,9 +2,11 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 
 	"github.com/aereal/frontier"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -24,6 +26,12 @@ type App struct {
 }
 
 const tracerName = "github.com/aereal/frontier/internal/cli"
+
+var (
+	errFunctionNameRequired = errors.New("function name is required")
+	errFunctionPathRequired = errors.New("function path is required")
+	errConfigPathRequired   = errors.New("config path is required")
+)
 
 func New(input io.Reader, out, errOut io.Writer) *App {
 	app := &App{
@@ -48,6 +56,7 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 					}
 					endpoint = defaultOtelTraceEndpoint
 				}
+				slog.InfoContext(ctx, "set OTel trace endpoint", slog.String("endpoint", endpoint))
 
 				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
 				if err != nil {
@@ -92,7 +101,12 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 		Description: "render resolved function config",
 		Action:      app.actionRender,
 	}
-	app.base.Commands = append(app.base.Commands, cmdDeploy, cmdRender)
+	cmdImport := &cliv2.Command{
+		Name:   "import",
+		Action: app.actionImport,
+		Flags:  []cliv2.Flag{flagConfigPath, flagFunctionPath, flagFunctionName},
+	}
+	app.base.Commands = append(app.base.Commands, cmdDeploy, cmdRender, cmdImport)
 	for _, c := range app.base.Commands {
 		instrumentTrace(c)
 	}
@@ -130,6 +144,16 @@ var (
 		Usage: "whether publish the function immediately",
 		Value: true,
 	}
+	flagFunctionName = &cliv2.StringFlag{
+		Name:     "name",
+		Usage:    "function name",
+		Required: true,
+	}
+	flagFunctionPath = &cliv2.PathFlag{
+		Name:  "function-path",
+		Usage: "function implementation path",
+		Value: cliv2.Path("fn.js"),
+	}
 )
 
 func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
@@ -150,6 +174,46 @@ func (a *App) actionRender(cliCtx *cliv2.Context) error {
 	configPath := cliCtx.Path(flagConfigPath.Name)
 	renderer := frontier.NewRenderer(configPath, cliCtx.App.Writer)
 	return renderer.Render(cliCtx.Context)
+}
+
+func (a *App) actionImport(cliCtx *cliv2.Context) error {
+	functionName := cliCtx.String(flagFunctionName.Name)
+	if functionName == "" {
+		return errFunctionNameRequired
+	}
+	functionPath := cliCtx.Path(flagFunctionPath.Name)
+	if functionPath == "" {
+		return errFunctionPathRequired
+	}
+	configPath := cliCtx.Path(flagConfigPath.Name)
+	if configPath == "" {
+		return errConfigPathRequired
+	}
+
+	fnFile, err := openForWrite(functionPath, 0600)
+	if err != nil {
+		return err
+	}
+	defer fnFile.Close()
+	configFile, err := openForWrite(configPath, 0600)
+	if err != nil {
+		return err
+	}
+	defer configFile.Close()
+
+	ctx := cliCtx.Context
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return err
+	}
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
+	client := cloudfront.NewFromConfig(cfg)
+	functionOut := &frontier.WritableFile{
+		FilePath: functionPath,
+		Writer:   fnFile,
+	}
+	importer := frontier.NewImporter(client, functionName, configFile, functionOut)
+	return importer.Import(cliCtx.Context)
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
@@ -200,4 +264,12 @@ var _ slog.Handler = (*leveledHandler)(nil)
 
 func (h *leveledHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return level >= h.level
+}
+
+func openForWrite(name string, perm os.FileMode) (*os.File, error) {
+	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
