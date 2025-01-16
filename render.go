@@ -3,8 +3,6 @@ package frontier
 import (
 	"context"
 	"io"
-
-	"gopkg.in/yaml.v3"
 )
 
 func NewRenderer(configPath string, output io.Writer) *Renderer {
@@ -24,9 +22,7 @@ func (r *Renderer) Render(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	enc := yaml.NewEncoder(r.output)
-	enc.SetIndent(2)
-	if err := enc.Encode(fn); err != nil {
+	if err := writeFunctionToStream(fn, r.output); err != nil {
 		return err
 	}
 	return nil

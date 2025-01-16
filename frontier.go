@@ -2,6 +2,7 @@ package frontier
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
@@ -20,6 +21,18 @@ func parseConfigFromPath(configPath string) (*Function, error) {
 		return nil, fmt.Errorf("yaml.Decoder.Decode: %w", err)
 	}
 	return fn, nil
+}
+
+func writeFunctionToStream(fn *Function, out io.Writer) error {
+	enc := yaml.NewEncoder(out)
+	enc.SetIndent(2)
+	if err := enc.Encode(fn); err != nil {
+		return err
+	}
+	if err := enc.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
 type Function struct {
