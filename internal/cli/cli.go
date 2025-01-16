@@ -103,6 +103,7 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 	}
 	cmdImport := &cliv2.Command{
 		Name:   "import",
+		Usage:  "import remote function code and config into the local",
 		Action: app.actionImport,
 		Flags:  []cliv2.Flag{flagConfigPath, flagFunctionPath, flagFunctionName},
 	}
