@@ -209,3 +209,115 @@ func (c *MockCFForDeployUpdateFunctionCall) DoAndReturn(f func(context.Context, 
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
+
+// MockCFForImport is a mock of CFForImport interface.
+type MockCFForImport struct {
+	ctrl     *gomock.Controller
+	recorder *MockCFForImportMockRecorder
+	isgomock struct{}
+}
+
+// MockCFForImportMockRecorder is the mock recorder for MockCFForImport.
+type MockCFForImportMockRecorder struct {
+	mock *MockCFForImport
+}
+
+// NewMockCFForImport creates a new mock instance.
+func NewMockCFForImport(ctrl *gomock.Controller) *MockCFForImport {
+	mock := &MockCFForImport{ctrl: ctrl}
+	mock.recorder = &MockCFForImportMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCFForImport) EXPECT() *MockCFForImportMockRecorder {
+	return m.recorder
+}
+
+// DescribeFunction mocks base method.
+func (m *MockCFForImport) DescribeFunction(ctx context.Context, params *cloudfront.DescribeFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.DescribeFunctionOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range optFns {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DescribeFunction", varargs...)
+	ret0, _ := ret[0].(*cloudfront.DescribeFunctionOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DescribeFunction indicates an expected call of DescribeFunction.
+func (mr *MockCFForImportMockRecorder) DescribeFunction(ctx, params any, optFns ...any) *MockCFForImportDescribeFunctionCall {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, optFns...)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeFunction", reflect.TypeOf((*MockCFForImport)(nil).DescribeFunction), varargs...)
+	return &MockCFForImportDescribeFunctionCall{Call: call}
+}
+
+// MockCFForImportDescribeFunctionCall wrap *gomock.Call
+type MockCFForImportDescribeFunctionCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockCFForImportDescribeFunctionCall) Return(arg0 *cloudfront.DescribeFunctionOutput, arg1 error) *MockCFForImportDescribeFunctionCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockCFForImportDescribeFunctionCall) Do(f func(context.Context, *cloudfront.DescribeFunctionInput, ...func(*cloudfront.Options)) (*cloudfront.DescribeFunctionOutput, error)) *MockCFForImportDescribeFunctionCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockCFForImportDescribeFunctionCall) DoAndReturn(f func(context.Context, *cloudfront.DescribeFunctionInput, ...func(*cloudfront.Options)) (*cloudfront.DescribeFunctionOutput, error)) *MockCFForImportDescribeFunctionCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// GetFunction mocks base method.
+func (m *MockCFForImport) GetFunction(ctx context.Context, params *cloudfront.GetFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range optFns {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetFunction", varargs...)
+	ret0, _ := ret[0].(*cloudfront.GetFunctionOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFunction indicates an expected call of GetFunction.
+func (mr *MockCFForImportMockRecorder) GetFunction(ctx, params any, optFns ...any) *MockCFForImportGetFunctionCall {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, optFns...)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFunction", reflect.TypeOf((*MockCFForImport)(nil).GetFunction), varargs...)
+	return &MockCFForImportGetFunctionCall{Call: call}
+}
+
+// MockCFForImportGetFunctionCall wrap *gomock.Call
+type MockCFForImportGetFunctionCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockCFForImportGetFunctionCall) Return(arg0 *cloudfront.GetFunctionOutput, arg1 error) *MockCFForImportGetFunctionCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockCFForImportGetFunctionCall) Do(f func(context.Context, *cloudfront.GetFunctionInput, ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error)) *MockCFForImportGetFunctionCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockCFForImportGetFunctionCall) DoAndReturn(f func(context.Context, *cloudfront.GetFunctionInput, ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error)) *MockCFForImportGetFunctionCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
