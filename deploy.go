@@ -9,10 +9,10 @@ import (
 )
 
 type Deployer struct {
-	client CloudFrontClient
+	client CFForDeploy
 }
 
-func NewDeployer(client CloudFrontClient) *Deployer {
+func NewDeployer(client CFForDeploy) *Deployer {
 	d := &Deployer{client: client}
 	return d
 }

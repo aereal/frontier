@@ -26,7 +26,7 @@ func TestDeployer_ok_existing(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	client := NewMockCloudFrontClient(ctrl)
+	client := NewMockCFForDeploy(ctrl)
 	client.EXPECT().
 		GetFunction(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, input *cloudfront.GetFunctionInput, _ ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error) {
@@ -96,7 +96,7 @@ func TestDeployer_ok_create(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	client := NewMockCloudFrontClient(ctrl)
+	client := NewMockCFForDeploy(ctrl)
 	client.EXPECT().
 		GetFunction(gomock.Any(), gomock.Any()).
 		Return(nil, &types.NoSuchFunctionExists{Message: ref("not found")}).
