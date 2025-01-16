@@ -31,14 +31,25 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 			Reader:    input,
 			Writer:    out,
 			ErrWriter: errOut,
-			Flags:     []cliv2.Flag{flagOtelTrace},
+			Flags:     []cliv2.Flag{flagOtelTrace, flagOtelTraceEndpoint, flagLogLevel},
 			Before: func(cliCtx *cliv2.Context) error {
-				if !cliCtx.Bool(flagOtelTrace.Name) {
-					return nil
+				if level := getLogLevel(cliCtx); level != slog.LevelInfo {
+					lh := &leveledHandler{
+						level: level, Handler: slog.Default().Handler(),
+					}
+					slog.SetDefault(slog.New(lh))
 				}
 
+				endpoint := cliCtx.String(flagOtelTraceEndpoint.Name)
 				ctx := cliCtx.Context
-				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
+				if endpoint == "" {
+					if !cliCtx.Bool(flagOtelTrace.Name) {
+						return nil
+					}
+					endpoint = defaultOtelTraceEndpoint
+				}
+
+				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
 				if err != nil {
 					slog.WarnContext(ctx, "failed to setup otlptracegrpc", slog.String("error", err.Error()))
 					return nil
@@ -89,10 +100,25 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 }
 
 var (
+	defaultOtelTraceEndpoint = "localhost:4317"
+
+	flagOtelTraceEndpoint = &cliv2.StringFlag{
+		Name:  "otel-trace-endpoint",
+		Usage: "an endpoint (such as localhost:4317) to send OpenTelemetry traces. an empty value indicates no trace should be sent.",
+	}
 	flagOtelTrace = &cliv2.BoolFlag{
 		Name:  "otel-trace",
-		Usage: "enable OpenTelemetry traces",
+		Usage: "Deprecated: use --otel-trace-endpoint. enable OpenTelemetry traces.",
 		Value: false,
+		Action: func(ctx *cliv2.Context, b bool) error {
+			slog.WarnContext(ctx.Context, "--otel-trace option is deprecated. use --otel-trace-endpoint")
+			return nil
+		},
+	}
+	flagLogLevel = &cliv2.GenericFlag{
+		Name:  "log-level",
+		Usage: "specify minimum log level. accepts valid [slog.Level] string representation.",
+		Value: &logLevel{slog.LevelInfo},
 	}
 	flagConfigPath = &cliv2.PathFlag{
 		Name:  "config",
@@ -142,4 +168,36 @@ func instrumentTrace(cmd *cliv2.Command) {
 		span.End()
 		return nil
 	}
+}
+
+type logLevel struct {
+	slog.Level
+}
+
+var _ cliv2.Generic = (*logLevel)(nil)
+
+func (l *logLevel) Set(v string) error {
+	if err := l.Level.UnmarshalText([]byte(v)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getLogLevel(cliCtx *cliv2.Context) slog.Level {
+	ll, ok := cliCtx.Generic(flagLogLevel.Name).(*logLevel)
+	if ok {
+		return ll.Level
+	}
+	return slog.LevelInfo
+}
+
+type leveledHandler struct {
+	slog.Handler
+	level slog.Level
+}
+
+var _ slog.Handler = (*leveledHandler)(nil)
+
+func (h *leveledHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.level
 }
