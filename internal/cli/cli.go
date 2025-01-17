@@ -75,7 +75,7 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 				return nil
 			},
 			After: func(cliCtx *cliv2.Context) error {
-				if !cliCtx.Bool(flagOtelTrace.Name) || cliCtx.String(flagOtelTraceEndpoint.Name) == "" {
+				if !cliCtx.Bool(flagOtelTrace.Name) && cliCtx.String(flagOtelTraceEndpoint.Name) == "" {
 					return nil
 				}
 
