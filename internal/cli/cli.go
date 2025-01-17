@@ -33,7 +33,12 @@ var (
 	errConfigPathRequired   = errors.New("config path is required")
 )
 
-func New(input io.Reader, out, errOut io.Writer) *App {
+func New(input io.Reader, out, errOut io.Writer, spanExporterFactory SpanExporterFactory) *App {
+	seFactory := spanExporterFactory
+	if seFactory == nil {
+		seFactory = NoopExporterFactory{}
+	}
+
 	app := &App{
 		base: &cliv2.App{
 			Reader:    input,
@@ -58,9 +63,11 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 				}
 				slog.InfoContext(ctx, "set OTel trace endpoint", slog.String("endpoint", endpoint))
 
-				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
+				exporter, err := seFactory.BuildSpanExporter(ctx, endpoint)
 				if err != nil {
-					slog.WarnContext(ctx, "failed to setup otlptracegrpc", slog.String("error", err.Error()))
+					if !errors.Is(err, errNoExporterBuilt) {
+						slog.WarnContext(ctx, "failed to setup trace exporter", slog.String("error", err.Error()))
+					}
 					return nil
 				}
 				res := resource.NewWithAttributes(
@@ -273,4 +280,26 @@ func openForWrite(name string, perm os.FileMode) (*os.File, error) {
 		return nil, err
 	}
 	return f, nil
+}
+
+type SpanExporterFactory interface {
+	BuildSpanExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error)
+}
+
+type GRPCExporterFactory struct{}
+
+var _ SpanExporterFactory = (*GRPCExporterFactory)(nil)
+
+func (GRPCExporterFactory) BuildSpanExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error) {
+	return otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
+}
+
+type NoopExporterFactory struct{}
+
+var _ SpanExporterFactory = (*NoopExporterFactory)(nil)
+
+var errNoExporterBuilt = errors.New("no exporter built")
+
+func (NoopExporterFactory) BuildSpanExporter(_ context.Context, _ string) (sdktrace.SpanExporter, error) {
+	return nil, errNoExporterBuilt
 }
