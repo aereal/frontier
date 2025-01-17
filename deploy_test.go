@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/internal/cfmock"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	"github.com/google/go-cmp/cmp"
@@ -26,7 +27,7 @@ func TestDeployer_ok_existing(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	client := NewMockCFForDeploy(ctrl)
+	client := cfmock.NewMockCloudFrontClient(ctrl)
 	client.EXPECT().
 		GetFunction(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, input *cloudfront.GetFunctionInput, _ ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error) {
@@ -96,7 +97,7 @@ func TestDeployer_ok_create(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	client := NewMockCFForDeploy(ctrl)
+	client := cfmock.NewMockCloudFrontClient(ctrl)
 	client.EXPECT().
 		GetFunction(gomock.Any(), gomock.Any()).
 		Return(nil, &types.NoSuchFunctionExists{Message: ref("not found")}).

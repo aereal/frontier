@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/internal/cfmock"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	"github.com/aws/smithy-go"
@@ -17,14 +18,14 @@ import (
 func TestImporter_Import(t *testing.T) {
 	testCases := []struct {
 		name         string
-		mock         func(c *MockCFForImport)
+		mock         func(c *cfmock.MockCloudFrontClient)
 		wantConfig   string
 		wantFunction string
 		wantErr      error
 	}{
 		{
 			name: "ok",
-			mock: func(c *MockCFForImport) {
+			mock: func(c *cfmock.MockCloudFrontClient) {
 				okGetFunction(c)
 				okDescribeFunction(c)
 			},
@@ -34,7 +35,7 @@ func TestImporter_Import(t *testing.T) {
 		{
 			name:    "failed to call GetFunction()",
 			wantErr: errOops,
-			mock: func(c *MockCFForImport) {
+			mock: func(c *cfmock.MockCloudFrontClient) {
 				c.EXPECT().
 					GetFunction(gomock.Any(), gomock.Any()).
 					Return(nil, errOops).
@@ -44,7 +45,7 @@ func TestImporter_Import(t *testing.T) {
 		{
 			name:    "failed to call DescribeFunction()",
 			wantErr: errOops,
-			mock: func(c *MockCFForImport) {
+			mock: func(c *cfmock.MockCloudFrontClient) {
 				okGetFunction(c)
 				c.EXPECT().
 					DescribeFunction(gomock.Any(), gomock.Any()).
@@ -55,7 +56,7 @@ func TestImporter_Import(t *testing.T) {
 		{
 			name:    "function not found",
 			wantErr: errNoSuchFn,
-			mock: func(c *MockCFForImport) {
+			mock: func(c *cfmock.MockCloudFrontClient) {
 				err := &smithy.OperationError{
 					Err: errNoSuchFn,
 				}
@@ -76,7 +77,7 @@ func TestImporter_Import(t *testing.T) {
 			defer cancel()
 
 			ctrl := gomock.NewController(t)
-			client := NewMockCFForImport(ctrl)
+			client := cfmock.NewMockCloudFrontClient(ctrl)
 			if tc.mock != nil {
 				tc.mock(client)
 			}
@@ -140,14 +141,14 @@ function handler(event) { return event.response }
 	}
 )
 
-func okGetFunction(c *MockCFForImport) {
+func okGetFunction(c *cfmock.MockCloudFrontClient) {
 	c.EXPECT().
 		GetFunction(gomock.Any(), gomock.Any()).
 		Return(okGetFunctionOutput, nil).
 		Times(1)
 }
 
-func okDescribeFunction(c *MockCFForImport) {
+func okDescribeFunction(c *cfmock.MockCloudFrontClient) {
 	c.EXPECT().
 		DescribeFunction(gomock.Any(), gomock.Any()).
 		Return(okDescribeFunctionOutput, nil).

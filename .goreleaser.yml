@@ -12,5 +12,7 @@ builds:
     goarch:
       - amd64
       - arm64
+    flags:
+      - -tags live
 release:
   mode: keep-existing
