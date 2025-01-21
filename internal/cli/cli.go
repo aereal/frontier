@@ -1,3 +1,5 @@
+//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./command_mock_gen.go github.com/aereal/frontier/internal/cli Deployer,Importer,Renderer
+
 package cli
 
 import (
@@ -21,8 +23,23 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type Deployer interface {
+	Deploy(ctx context.Context, configPath string, publish bool) error
+}
+
+type Importer interface {
+	Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *frontier.WritableFile) error
+}
+
+type Renderer interface {
+	Render(ctx context.Context, configPath string, output io.Writer) error
+}
+
 type App struct {
-	base *cliv2.App
+	base     *cliv2.App
+	deployer Deployer
+	importer Importer
+	renderer Renderer
 }
 
 const tracerName = "github.com/aereal/frontier/internal/cli"
@@ -33,13 +50,16 @@ var (
 	errConfigPathRequired   = errors.New("config path is required")
 )
 
-func New(input io.Reader, out, errOut io.Writer, spanExporterFactory SpanExporterFactory) *App {
+func New(input io.Reader, out, errOut io.Writer, spanExporterFactory SpanExporterFactory, deployer Deployer, importer Importer, renderer Renderer) *App {
 	seFactory := spanExporterFactory
 	if seFactory == nil {
 		seFactory = NoopExporterFactory{}
 	}
 
 	app := &App{
+		deployer: deployer,
+		importer: importer,
+		renderer: renderer,
 		base: &cliv2.App{
 			Reader:    input,
 			Writer:    out,
@@ -166,22 +186,14 @@ var (
 
 func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
 	ctx := cliCtx.Context
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	client := cloudfront.NewFromConfig(cfg)
 	configPath := cliCtx.Path(flagConfigPath.Name)
 	doPublish := cliCtx.Bool(flagPublish.Name)
-	deployer := frontier.NewDeployer(client)
-	return deployer.Deploy(ctx, configPath, doPublish)
+	return a.deployer.Deploy(ctx, configPath, doPublish)
 }
 
 func (a *App) actionRender(cliCtx *cliv2.Context) error {
 	configPath := cliCtx.Path(flagConfigPath.Name)
-	renderer := frontier.NewRenderer()
-	return renderer.Render(cliCtx.Context, configPath, cliCtx.App.Writer)
+	return a.renderer.Render(cliCtx.Context, configPath, cliCtx.App.Writer)
 }
 
 func (a *App) actionImport(cliCtx *cliv2.Context) error {
@@ -209,19 +221,11 @@ func (a *App) actionImport(cliCtx *cliv2.Context) error {
 	}
 	defer configFile.Close()
 
-	ctx := cliCtx.Context
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	client := cloudfront.NewFromConfig(cfg)
 	functionOut := &frontier.WritableFile{
 		FilePath: functionPath,
 		Writer:   fnFile,
 	}
-	importer := frontier.NewImporter(client)
-	return importer.Import(cliCtx.Context, functionName, configFile, functionOut)
+	return a.importer.Import(cliCtx.Context, functionName, configFile, functionOut)
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
@@ -302,4 +306,18 @@ var errNoExporterBuilt = errors.New("no exporter built")
 
 func (NoopExporterFactory) BuildSpanExporter(_ context.Context, _ string) (sdktrace.SpanExporter, error) {
 	return nil, errNoExporterBuilt
+}
+
+type SDKCloudFrontClientProvider struct{}
+
+var _ frontier.CloudFrontClientProvider = (*SDKCloudFrontClientProvider)(nil)
+
+func (SDKCloudFrontClientProvider) ProvideCloudFrontClient(ctx context.Context) (frontier.CloudFrontClient, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
+	client := cloudfront.NewFromConfig(cfg)
+	return client, nil
 }

@@ -22,3 +22,17 @@ type CFForImport interface {
 	DescribeFunction(ctx context.Context, params *cloudfront.DescribeFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.DescribeFunctionOutput, error)
 	GetFunction(ctx context.Context, params *cloudfront.GetFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.GetFunctionOutput, error)
 }
+
+type CloudFrontClientProvider interface {
+	ProvideCloudFrontClient(ctx context.Context) (CloudFrontClient, error)
+}
+
+type StaticCFClientProvider struct {
+	Client CloudFrontClient
+}
+
+var _ CloudFrontClientProvider = (*StaticCFClientProvider)(nil)
+
+func (s *StaticCFClientProvider) ProvideCloudFrontClient(_ context.Context) (CloudFrontClient, error) {
+	return s.Client, nil
+}

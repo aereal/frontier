@@ -12,6 +12,7 @@ import (
 	"github.com/aereal/frontier/internal/cli"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.uber.org/mock/gomock"
 )
 
 func TestApp_otel(t *testing.T) {
@@ -20,7 +21,15 @@ func TestApp_otel(t *testing.T) {
 	stderr := new(bytes.Buffer)
 	otlpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	t.Cleanup(otlpServer.Close)
-	app := cli.New(stdin, stdout, stderr, httpExporterFactory{})
+	ctrl := gomock.NewController(t)
+	deployer := cli.NewMockDeployer(ctrl)
+	importer := cli.NewMockImporter(ctrl)
+	renderer := cli.NewMockRenderer(ctrl)
+	renderer.EXPECT().
+		Render(gomock.Any(), "../../testdata/config.yml", stdout).
+		Return(nil).
+		Times(1)
+	app := cli.New(stdin, stdout, stderr, httpExporterFactory{}, deployer, importer, renderer)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	if deadline, ok := t.Deadline(); ok {
