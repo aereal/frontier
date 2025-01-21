@@ -36,8 +36,8 @@ func TestRenderer_Render(t *testing.T) {
 			defer cancel()
 
 			buf := new(bytes.Buffer)
-			renderer := frontier.NewRenderer("./testdata/config.yml", buf)
-			gotErr := renderer.Render(ctx)
+			renderer := frontier.NewRenderer()
+			gotErr := renderer.Render(ctx, "./testdata/config.yml", buf)
 			if !errors.Is(gotErr, tc.wantErr) {
 				t.Errorf("want error: %s\n got error: %s", tc.wantErr, gotErr)
 			}

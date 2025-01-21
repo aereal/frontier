@@ -87,8 +87,8 @@ func TestImporter_Import(t *testing.T) {
 				FilePath: "test-fn.js",
 				Writer:   fnOut,
 			}
-			importer := frontier.NewImporter(client, "test-fn", configOut, wf)
-			gotErr := importer.Import(ctx)
+			importer := frontier.NewImporter(client)
+			gotErr := importer.Import(ctx, "test-fn", configOut, wf)
 			if !errors.Is(gotErr, tc.wantErr) {
 				t.Errorf("error:\n\twant: %s (%T)\n\t got: %s (%T)", tc.wantErr, tc.wantErr, gotErr, gotErr)
 			}
