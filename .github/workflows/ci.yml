@@ -41,7 +41,7 @@ jobs:
       - run: go mod download
       - name: test
         run: go test -v -race -coverprofile=cover.out ./...
-      - uses: k1LoW/octocov-action@150a208f24227a2daf5756fbef9d73c056f5c89f # v0.56.3
+      - uses: k1LoW/octocov-action@1ad702b3118b6a055c00b01db68ca0d9f6641dbc # v1.4.0
         if: ${{ matrix.go_version == 'stable' }}
   determine_release:
     permissions:
