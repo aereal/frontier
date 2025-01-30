@@ -10,25 +10,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 )
 
-func NewImporter(client CFForImport, functionName string, configStream io.Writer, functionStream *WritableFile) *Importer {
+func NewImporter(client CFForImport) *Importer {
 	return &Importer{
-		client:         client,
-		functionName:   functionName,
-		configStream:   configStream,
-		functionStream: functionStream,
+		client: client,
 	}
 }
 
 type Importer struct {
-	functionName   string
-	client         CFForImport
-	configStream   io.Writer
-	functionStream *WritableFile
+	client CFForImport
 }
 
-func (i *Importer) Import(ctx context.Context) error {
+func (i *Importer) Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *WritableFile) error {
 	getInput := &cloudfront.GetFunctionInput{
-		Name: &i.functionName,
+		Name: &functionName,
 	}
 	getOut, err := i.client.GetFunction(ctx, getInput)
 	if err != nil {
@@ -40,14 +34,14 @@ func (i *Importer) Import(ctx context.Context) error {
 	}
 
 	describeInput := &cloudfront.DescribeFunctionInput{
-		Name: &i.functionName,
+		Name: &functionName,
 	}
 	describeOut, err := i.client.DescribeFunction(ctx, describeInput)
 	if err != nil {
 		return fmt.Errorf("DescribeFunction: %w", err)
 	}
 
-	if _, err := i.functionStream.Write(getOut.FunctionCode); err != nil {
+	if _, err := functionStream.Write(getOut.FunctionCode); err != nil {
 		return err
 	}
 	fnCfg := &FunctionConfig{
@@ -58,10 +52,10 @@ func (i *Importer) Import(ctx context.Context) error {
 		Name:   *describeOut.FunctionSummary.Name,
 		Config: fnCfg,
 		Code: &FunctionCode{
-			Path: i.functionStream.FilePath,
+			Path: functionStream.FilePath,
 		},
 	}
-	if err := writeFunctionToStream(fn, i.configStream); err != nil {
+	if err := writeFunctionToStream(fn, configStream); err != nil {
 		return err
 	}
 	return nil

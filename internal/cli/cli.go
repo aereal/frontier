@@ -173,8 +173,8 @@ func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
 
 func (a *App) actionRender(cliCtx *cliv2.Context) error {
 	configPath := cliCtx.Path(flagConfigPath.Name)
-	renderer := frontier.NewRenderer(configPath, cliCtx.App.Writer)
-	return renderer.Render(cliCtx.Context)
+	renderer := frontier.NewRenderer()
+	return renderer.Render(cliCtx.Context, configPath, cliCtx.App.Writer)
 }
 
 func (a *App) actionImport(cliCtx *cliv2.Context) error {
@@ -213,8 +213,8 @@ func (a *App) actionImport(cliCtx *cliv2.Context) error {
 		FilePath: functionPath,
 		Writer:   fnFile,
 	}
-	importer := frontier.NewImporter(client, functionName, configFile, functionOut)
-	return importer.Import(cliCtx.Context)
+	importer := frontier.NewImporter(client)
+	return importer.Import(cliCtx.Context, functionName, configFile, functionOut)
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {

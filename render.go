@@ -5,24 +5,18 @@ import (
 	"io"
 )
 
-func NewRenderer(configPath string, output io.Writer) *Renderer {
-	return &Renderer{
-		configPath: configPath,
-		output:     output,
-	}
+func NewRenderer() *Renderer {
+	return &Renderer{}
 }
 
-type Renderer struct {
-	configPath string
-	output     io.Writer
-}
+type Renderer struct{}
 
-func (r *Renderer) Render(ctx context.Context) error {
-	fn, err := parseConfigFromPath(r.configPath)
+func (r *Renderer) Render(ctx context.Context, configPath string, output io.Writer) error {
+	fn, err := parseConfigFromPath(configPath)
 	if err != nil {
 		return err
 	}
-	if err := writeFunctionToStream(fn, r.output); err != nil {
+	if err := writeFunctionToStream(fn, output); err != nil {
 		return err
 	}
 	return nil

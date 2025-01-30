@@ -1,5 +1,3 @@
-//go:generate go run go.uber.org/mock/mockgen -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package frontier_test -destination mock_cloudfront_client_test.go github.com/aereal/frontier CFForDeploy,CFForImport
-
 package frontier
 
 import (
@@ -7,6 +5,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 )
+
+type CloudFrontClient interface {
+	CFForDeploy
+	CFForImport
+}
 
 type CFForDeploy interface {
 	CreateFunction(ctx context.Context, params *cloudfront.CreateFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.CreateFunctionOutput, error)
