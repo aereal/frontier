@@ -64,7 +64,7 @@ func (a *App) actionImport(ctx context.Context, cmd *cli.Command) error {
 		FilePath: functionPath,
 		Writer:   fnFile,
 	}
-	return a.importController.Import(ctx, functionName, configFile, functionOut)
+	return a.controllers.Import(ctx, functionName, configFile, functionOut)
 }
 
 func openForWrite(name string, perm os.FileMode) (*os.File, error) {

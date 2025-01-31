@@ -19,5 +19,5 @@ func (a *App) cmdRender() *cli.Command {
 
 func (a *App) actionRender(ctx context.Context, cmd *cli.Command) error {
 	configPath := cmd.String(flagConfigPath.Name)
-	return a.renderController.Render(ctx, configPath, cmd.Writer)
+	return a.controllers.Render(ctx, configPath, cmd.Writer)
 }

@@ -26,5 +26,5 @@ func (a *App) cmdDeploy() *cli.Command {
 func (a *App) actionDeploy(ctx context.Context, cmd *cli.Command) error {
 	configPath := cmd.String(flagConfigPath.Name)
 	doPublish := cmd.Bool("publish")
-	return a.deployController.Deploy(ctx, configPath, doPublish)
+	return a.controllers.Deploy(ctx, configPath, doPublish)
 }

@@ -27,24 +27,26 @@ type RenderController interface {
 	Render(ctx context.Context, configPath string, output io.Writer) error
 }
 
-func New(input io.Reader, output, errOutput io.Writer, importController ImportController, deployController DeployController, renderController RenderController) *App {
+type Controllers struct {
+	ImportController
+	DeployController
+	RenderController
+}
+
+func New(input io.Reader, output, errOutput io.Writer, controllers Controllers) *App {
 	return &App{
-		input:            input,
-		output:           output,
-		errOutput:        errOutput,
-		importController: importController,
-		deployController: deployController,
-		renderController: renderController,
+		input:       input,
+		output:      output,
+		errOutput:   errOutput,
+		controllers: controllers,
 	}
 }
 
 type App struct {
-	input            io.Reader
-	output           io.Writer
-	errOutput        io.Writer
-	importController ImportController
-	deployController DeployController
-	renderController RenderController
+	input       io.Reader
+	output      io.Writer
+	errOutput   io.Writer
+	controllers Controllers
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
