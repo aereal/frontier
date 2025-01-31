@@ -19,12 +19,17 @@ type ImportController interface {
 	Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *frontier.WritableFile) error
 }
 
-func New(input io.Reader, output, errOutput io.Writer, importController ImportController) *App {
+type DeployController interface {
+	Deploy(ctx context.Context, configPath string, publish bool) error
+}
+
+func New(input io.Reader, output, errOutput io.Writer, importController ImportController, deployController DeployController) *App {
 	return &App{
 		input:            input,
 		output:           output,
 		errOutput:        errOutput,
 		importController: importController,
+		deployController: deployController,
 	}
 }
 
@@ -33,6 +38,7 @@ type App struct {
 	output           io.Writer
 	errOutput        io.Writer
 	importController ImportController
+	deployController DeployController
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
