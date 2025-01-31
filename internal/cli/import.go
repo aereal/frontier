@@ -6,10 +6,7 @@ import (
 	"os"
 
 	"github.com/aereal/frontier"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/urfave/cli/v3"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
 
 var (
@@ -63,18 +60,11 @@ func (a *App) actionImport(ctx context.Context, cmd *cli.Command) error {
 	}
 	defer configFile.Close()
 
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	client := cloudfront.NewFromConfig(cfg)
 	functionOut := &frontier.WritableFile{
 		FilePath: functionPath,
 		Writer:   fnFile,
 	}
-	importer := frontier.NewImporter(client)
-	return importer.Import(ctx, functionName, configFile, functionOut)
+	return a.importController.Import(ctx, functionName, configFile, functionOut)
 }
 
 func openForWrite(name string, perm os.FileMode) (*os.File, error) {

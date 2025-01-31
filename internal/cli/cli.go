@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
+	"github.com/aereal/frontier"
 	cli "github.com/urfave/cli/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -14,18 +15,24 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-func New(input io.Reader, output, errOutput io.Writer) *App {
+type ImportController interface {
+	Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *frontier.WritableFile) error
+}
+
+func New(input io.Reader, output, errOutput io.Writer, importController ImportController) *App {
 	return &App{
-		input:     input,
-		output:    output,
-		errOutput: errOutput,
+		input:            input,
+		output:           output,
+		errOutput:        errOutput,
+		importController: importController,
 	}
 }
 
 type App struct {
-	input     io.Reader
-	output    io.Writer
-	errOutput io.Writer
+	input            io.Reader
+	output           io.Writer
+	errOutput        io.Writer
+	importController ImportController
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
