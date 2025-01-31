@@ -23,13 +23,18 @@ type DeployController interface {
 	Deploy(ctx context.Context, configPath string, publish bool) error
 }
 
-func New(input io.Reader, output, errOutput io.Writer, importController ImportController, deployController DeployController) *App {
+type RenderController interface {
+	Render(ctx context.Context, configPath string, output io.Writer) error
+}
+
+func New(input io.Reader, output, errOutput io.Writer, importController ImportController, deployController DeployController, renderController RenderController) *App {
 	return &App{
 		input:            input,
 		output:           output,
 		errOutput:        errOutput,
 		importController: importController,
 		deployController: deployController,
+		renderController: renderController,
 	}
 }
 
@@ -39,6 +44,7 @@ type App struct {
 	errOutput        io.Writer
 	importController ImportController
 	deployController DeployController
+	renderController RenderController
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {

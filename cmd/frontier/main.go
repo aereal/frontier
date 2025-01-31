@@ -17,10 +17,11 @@ func run() int {
 	sh := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{})
 	sl := slog.New(sh)
 	slog.SetDefault(sl)
+	renderController := frontier.NewRenderer()
 	var cfBuilder cli.CloudFrontSDKBuilder
 	importController := frontier.NewImporter(cfBuilder)
 	deployController := frontier.NewDeployer(cfBuilder)
-	if err := cli.New(os.Stdin, os.Stdout, os.Stderr, importController, deployController).Run(context.Background(), os.Args); err != nil {
+	if err := cli.New(os.Stdin, os.Stdout, os.Stderr, importController, deployController, renderController).Run(context.Background(), os.Args); err != nil {
 		slog.Error(err.Error(), slog.String("error", err.Error()))
 		return 1
 	}
