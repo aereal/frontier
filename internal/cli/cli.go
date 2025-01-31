@@ -1,3 +1,5 @@
+//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./command_mock_gen.go github.com/aereal/frontier/internal/cli Deployer,Importer,Renderer
+
 package cli
 
 import (
@@ -21,8 +23,23 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type Deployer interface {
+	Deploy(ctx context.Context, configPath string, publish bool) error
+}
+
+type Importer interface {
+	Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *frontier.WritableFile) error
+}
+
+type Renderer interface {
+	Render(ctx context.Context, configPath string, output io.Writer) error
+}
+
 type App struct {
-	base *cliv2.App
+	base     *cliv2.App
+	deployer Deployer
+	importer Importer
+	renderer Renderer
 }
 
 const tracerName = "github.com/aereal/frontier/internal/cli"
@@ -33,8 +50,16 @@ var (
 	errConfigPathRequired   = errors.New("config path is required")
 )
 
-func New(input io.Reader, out, errOut io.Writer) *App {
+func New(input io.Reader, out, errOut io.Writer, spanExporterFactory SpanExporterFactory, deployer Deployer, importer Importer, renderer Renderer) *App {
+	seFactory := spanExporterFactory
+	if seFactory == nil {
+		seFactory = NoopExporterFactory{}
+	}
+
 	app := &App{
+		deployer: deployer,
+		importer: importer,
+		renderer: renderer,
 		base: &cliv2.App{
 			Reader:    input,
 			Writer:    out,
@@ -58,9 +83,11 @@ func New(input io.Reader, out, errOut io.Writer) *App {
 				}
 				slog.InfoContext(ctx, "set OTel trace endpoint", slog.String("endpoint", endpoint))
 
-				exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
+				exporter, err := seFactory.BuildSpanExporter(ctx, endpoint)
 				if err != nil {
-					slog.WarnContext(ctx, "failed to setup otlptracegrpc", slog.String("error", err.Error()))
+					if !errors.Is(err, errNoExporterBuilt) {
+						slog.WarnContext(ctx, "failed to setup trace exporter", slog.String("error", err.Error()))
+					}
 					return nil
 				}
 				res := resource.NewWithAttributes(
@@ -159,22 +186,14 @@ var (
 
 func (a *App) actionDeploy(cliCtx *cliv2.Context) error {
 	ctx := cliCtx.Context
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	client := cloudfront.NewFromConfig(cfg)
 	configPath := cliCtx.Path(flagConfigPath.Name)
 	doPublish := cliCtx.Bool(flagPublish.Name)
-	deployer := frontier.NewDeployer(client)
-	return deployer.Deploy(ctx, configPath, doPublish)
+	return a.deployer.Deploy(ctx, configPath, doPublish)
 }
 
 func (a *App) actionRender(cliCtx *cliv2.Context) error {
 	configPath := cliCtx.Path(flagConfigPath.Name)
-	renderer := frontier.NewRenderer()
-	return renderer.Render(cliCtx.Context, configPath, cliCtx.App.Writer)
+	return a.renderer.Render(cliCtx.Context, configPath, cliCtx.App.Writer)
 }
 
 func (a *App) actionImport(cliCtx *cliv2.Context) error {
@@ -202,19 +221,11 @@ func (a *App) actionImport(cliCtx *cliv2.Context) error {
 	}
 	defer configFile.Close()
 
-	ctx := cliCtx.Context
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return err
-	}
-	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	client := cloudfront.NewFromConfig(cfg)
 	functionOut := &frontier.WritableFile{
 		FilePath: functionPath,
 		Writer:   fnFile,
 	}
-	importer := frontier.NewImporter(client)
-	return importer.Import(cliCtx.Context, functionName, configFile, functionOut)
+	return a.importer.Import(cliCtx.Context, functionName, configFile, functionOut)
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
@@ -273,4 +284,40 @@ func openForWrite(name string, perm os.FileMode) (*os.File, error) {
 		return nil, err
 	}
 	return f, nil
+}
+
+type SpanExporterFactory interface {
+	BuildSpanExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error)
+}
+
+type GRPCExporterFactory struct{}
+
+var _ SpanExporterFactory = (*GRPCExporterFactory)(nil)
+
+func (GRPCExporterFactory) BuildSpanExporter(ctx context.Context, endpoint string) (sdktrace.SpanExporter, error) {
+	return otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(endpoint))
+}
+
+type NoopExporterFactory struct{}
+
+var _ SpanExporterFactory = (*NoopExporterFactory)(nil)
+
+var errNoExporterBuilt = errors.New("no exporter built")
+
+func (NoopExporterFactory) BuildSpanExporter(_ context.Context, _ string) (sdktrace.SpanExporter, error) {
+	return nil, errNoExporterBuilt
+}
+
+type SDKCloudFrontClientProvider struct{}
+
+var _ frontier.CloudFrontClientProvider = (*SDKCloudFrontClientProvider)(nil)
+
+func (SDKCloudFrontClientProvider) ProvideCloudFrontClient(ctx context.Context) (frontier.CloudFrontClient, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
+	client := cloudfront.NewFromConfig(cfg)
+	return client, nil
 }

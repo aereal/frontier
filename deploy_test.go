@@ -82,7 +82,7 @@ func TestDeployer_ok_existing(t *testing.T) {
 		}).
 		Times(1)
 
-	deployer := frontier.NewDeployer(client)
+	deployer := frontier.NewDeployer(&frontier.StaticCFClientProvider{client})
 	if err := deployer.Deploy(ctx, "./testdata/config.yml", true); err != nil {
 		t.Errorf("deployer.Deploy: %+v", err)
 	}
@@ -142,7 +142,7 @@ func TestDeployer_ok_create(t *testing.T) {
 		}).
 		Times(1)
 
-	deployer := frontier.NewDeployer(client)
+	deployer := frontier.NewDeployer(&frontier.StaticCFClientProvider{client})
 	if err := deployer.Deploy(ctx, "./testdata/config.yml", true); err != nil {
 		t.Errorf("deployer.Deploy: %+v", err)
 	}

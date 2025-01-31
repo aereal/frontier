@@ -10,21 +10,25 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 )
 
-func NewImporter(client CFForImport) *Importer {
+func NewImporter(clientProvider CloudFrontClientProvider) *Importer {
 	return &Importer{
-		client: client,
+		clientProvider: clientProvider,
 	}
 }
 
 type Importer struct {
-	client CFForImport
+	clientProvider CloudFrontClientProvider
 }
 
 func (i *Importer) Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *WritableFile) error {
+	client, err := i.clientProvider.ProvideCloudFrontClient(ctx)
+	if err != nil {
+		return err
+	}
 	getInput := &cloudfront.GetFunctionInput{
 		Name: &functionName,
 	}
-	getOut, err := i.client.GetFunction(ctx, getInput)
+	getOut, err := client.GetFunction(ctx, getInput)
 	if err != nil {
 		noSuchFn := new(types.NoSuchFunctionExists)
 		if errors.As(err, &noSuchFn) {
@@ -36,7 +40,7 @@ func (i *Importer) Import(ctx context.Context, functionName string, configStream
 	describeInput := &cloudfront.DescribeFunctionInput{
 		Name: &functionName,
 	}
-	describeOut, err := i.client.DescribeFunction(ctx, describeInput)
+	describeOut, err := client.DescribeFunction(ctx, describeInput)
 	if err != nil {
 		return fmt.Errorf("DescribeFunction: %w", err)
 	}

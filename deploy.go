@@ -9,11 +9,11 @@ import (
 )
 
 type Deployer struct {
-	client CFForDeploy
+	clientProvider CloudFrontClientProvider
 }
 
-func NewDeployer(client CFForDeploy) *Deployer {
-	d := &Deployer{client: client}
+func NewDeployer(clientProvider CloudFrontClientProvider) *Deployer {
+	d := &Deployer{clientProvider: clientProvider}
 	return d
 }
 
@@ -23,8 +23,12 @@ func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) 
 		return err
 	}
 
+	client, err := d.clientProvider.ProvideCloudFrontClient(ctx)
+	if err != nil {
+		return err
+	}
 	var etag *string
-	existing, err := d.client.GetFunction(ctx, &cloudfront.GetFunctionInput{Name: &fn.Name})
+	existing, err := client.GetFunction(ctx, &cloudfront.GetFunctionInput{Name: &fn.Name})
 	if err != nil {
 		var notFoundErr *types.NoSuchFunctionExists
 		if !errors.As(err, &notFoundErr) {
@@ -34,7 +38,7 @@ func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) 
 		if err != nil {
 			return err
 		}
-		out, err := d.client.CreateFunction(ctx, input)
+		out, err := client.CreateFunction(ctx, input)
 		if err != nil {
 			return err
 		}
@@ -44,7 +48,7 @@ func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) 
 		if err != nil {
 			return err
 		}
-		out, err := d.client.UpdateFunction(ctx, input)
+		out, err := client.UpdateFunction(ctx, input)
 		if err != nil {
 			return err
 		}
@@ -56,7 +60,7 @@ func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) 
 			Name:    &fn.Name,
 			IfMatch: etag,
 		}
-		if _, err := d.client.PublishFunction(ctx, input); err != nil {
+		if _, err := client.PublishFunction(ctx, input); err != nil {
 			return err
 		}
 	}
