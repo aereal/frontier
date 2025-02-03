@@ -2,17 +2,10 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"os"
 
 	"github.com/aereal/frontier"
 	"github.com/urfave/cli/v3"
-)
-
-var (
-	errFunctionNameRequired = errors.New("function name is required")
-	errFunctionPathRequired = errors.New("function path is required")
-	errConfigPathRequired   = errors.New("config path is required")
 )
 
 func (a *App) cmdImport() *cli.Command {
@@ -38,15 +31,15 @@ func (a *App) cmdImport() *cli.Command {
 func (a *App) actionImport(ctx context.Context, cmd *cli.Command) error {
 	functionName := cmd.String("name")
 	if functionName == "" {
-		return errFunctionNameRequired
+		return ErrFunctionNameRequired
 	}
 	functionPath := cmd.String("function-path")
 	if functionPath == "" {
-		return errFunctionPathRequired
+		return ErrFunctionPathRequired
 	}
 	configPath := cmd.String(flagConfigPath.Name)
 	if configPath == "" {
-		return errConfigPathRequired
+		return ErrConfigPathRequired
 	}
 
 	fnFile, err := openForWrite(functionPath, 0600)
