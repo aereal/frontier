@@ -26,9 +26,9 @@ func (l *logLevel) Set(v string) error {
 func (l logLevel) Get() any { return l.Level }
 
 func getLogLevel(cmd *cli.Command) slog.Level {
-	ll, ok := cmd.Value(flagLogLevel.Name).(*logLevel)
+	sl, ok := cmd.Value(flagLogLevel.Name).(slog.Level)
 	if ok {
-		return ll.Level
+		return sl
 	}
 	return slog.LevelInfo
 }
