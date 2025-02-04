@@ -18,7 +18,7 @@ func NewDeployer(clientProvider CloudFrontClientProvider) *Deployer {
 }
 
 func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) error {
-	fn, err := parseConfigFromPath(configPath)
+	fn, err := ParseConfigFromPath(configPath)
 	if err != nil {
 		return err
 	}

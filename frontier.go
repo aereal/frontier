@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func parseConfigFromPath(configPath string) (*Function, error) {
+func ParseConfigFromPath(configPath string) (*Function, error) {
 	f, err := os.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open: %w", err)
