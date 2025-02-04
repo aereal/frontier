@@ -1,6 +1,7 @@
 package frontier
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	"gopkg.in/yaml.v3"
 )
+
+type MissingFunctionNameError struct{}
+
+func (MissingFunctionNameError) Error() string { return "name is required" }
+
+func (MissingFunctionNameError) Is(err error) bool {
+	var fnrErr MissingFunctionNameError
+	return errors.As(err, &fnrErr)
+}
 
 func ParseConfigFromPath(configPath string) (*Function, error) {
 	f, err := os.Open(configPath)
@@ -19,6 +29,9 @@ func ParseConfigFromPath(configPath string) (*Function, error) {
 	fn := new(Function)
 	if err := yaml.NewDecoder(f).Decode(fn); err != nil {
 		return nil, fmt.Errorf("yaml.Decoder.Decode: %w", err)
+	}
+	if fn.Name == "" {
+		return nil, MissingFunctionNameError{}
 	}
 	return fn, nil
 }
