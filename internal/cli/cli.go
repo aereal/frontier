@@ -37,18 +37,20 @@ type Controllers struct {
 
 func New(input io.Reader, output, errOutput io.Writer, controllers Controllers) *App {
 	return &App{
-		input:       input,
-		output:      output,
-		errOutput:   errOutput,
-		controllers: controllers,
+		input:         input,
+		output:        output,
+		errOutput:     errOutput,
+		controllers:   controllers,
+		shouldPublish: true,
 	}
 }
 
 type App struct {
-	input       io.Reader
-	output      io.Writer
-	errOutput   io.Writer
-	controllers Controllers
+	input         io.Reader
+	output        io.Writer
+	errOutput     io.Writer
+	controllers   Controllers
+	shouldPublish bool
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
