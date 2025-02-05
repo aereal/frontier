@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/internal/cf"
 	"github.com/aereal/frontier/internal/cfmock"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
@@ -87,7 +88,7 @@ func TestImporter_Import(t *testing.T) {
 				FilePath: "test-fn.js",
 				Writer:   fnOut,
 			}
-			importer := frontier.NewImporter(&frontier.StaticCFProvider{Client: client})
+			importer := frontier.NewImporter(&cf.StaticCFProvider{Client: client})
 			gotErr := importer.Import(ctx, "test-fn", configOut, wf)
 			if !errors.Is(gotErr, tc.wantErr) {
 				t.Errorf("error:\n\twant: %s (%T)\n\t got: %s (%T)", tc.wantErr, tc.wantErr, gotErr, gotErr)

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/internal/cf"
 	"github.com/aereal/frontier/internal/cli"
 )
 
@@ -17,7 +18,7 @@ func run() int {
 	sh := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{})
 	sl := slog.New(sh)
 	slog.SetDefault(sl)
-	var cfBuilder cli.CloudFrontSDKBuilder
+	var cfBuilder cf.SDKProvider
 	controllers := cli.Controllers{
 		RenderController: frontier.NewRenderer(),
 		ImportController: frontier.NewImporter(cfBuilder),
