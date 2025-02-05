@@ -93,3 +93,29 @@ type FunctionConfig struct {
 	Comment string                `yaml:"comment"`
 	Runtime types.FunctionRuntime `yaml:"runtime"`
 }
+
+type AssociatedDistribution struct {
+	DomainName string
+	ARN        string
+	ID         string
+	IsEnabled  bool
+	IsStaging  bool
+	Status     string
+}
+
+type CacheBehavior struct {
+	CachePolicyID  string
+	TargetOriginID string
+	IsDefault      bool
+}
+
+type AssociatedFunction struct {
+	ARN string
+}
+
+type FunctionAssociation struct {
+	Distribution  AssociatedDistribution
+	CacheBehavior CacheBehavior
+	EventType     string
+	Function      AssociatedFunction
+}
