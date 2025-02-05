@@ -168,6 +168,50 @@ func (c *MockCloudFrontClientGetFunctionCall) DoAndReturn(f func(context.Context
 	return c
 }
 
+// ListDistributions mocks base method.
+func (m *MockCloudFrontClient) ListDistributions(arg0 context.Context, arg1 *cloudfront.ListDistributionsInput, arg2 ...func(*cloudfront.Options)) (*cloudfront.ListDistributionsOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListDistributions", varargs...)
+	ret0, _ := ret[0].(*cloudfront.ListDistributionsOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDistributions indicates an expected call of ListDistributions.
+func (mr *MockCloudFrontClientMockRecorder) ListDistributions(arg0, arg1 any, arg2 ...any) *MockCloudFrontClientListDistributionsCall {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDistributions", reflect.TypeOf((*MockCloudFrontClient)(nil).ListDistributions), varargs...)
+	return &MockCloudFrontClientListDistributionsCall{Call: call}
+}
+
+// MockCloudFrontClientListDistributionsCall wrap *gomock.Call
+type MockCloudFrontClientListDistributionsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockCloudFrontClientListDistributionsCall) Return(arg0 *cloudfront.ListDistributionsOutput, arg1 error) *MockCloudFrontClientListDistributionsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockCloudFrontClientListDistributionsCall) Do(f func(context.Context, *cloudfront.ListDistributionsInput, ...func(*cloudfront.Options)) (*cloudfront.ListDistributionsOutput, error)) *MockCloudFrontClientListDistributionsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockCloudFrontClientListDistributionsCall) DoAndReturn(f func(context.Context, *cloudfront.ListDistributionsInput, ...func(*cloudfront.Options)) (*cloudfront.ListDistributionsOutput, error)) *MockCloudFrontClientListDistributionsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // PublishFunction mocks base method.
 func (m *MockCloudFrontClient) PublishFunction(ctx context.Context, params *cloudfront.PublishFunctionInput, optFns ...func(*cloudfront.Options)) (*cloudfront.PublishFunctionOutput, error) {
 	m.ctrl.T.Helper()
