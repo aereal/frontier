@@ -13,6 +13,6 @@ builds:
       - amd64
       - arm64
     flags:
-      - -tags live
+      - -tags=live
 release:
   mode: keep-existing
