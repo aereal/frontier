@@ -1,6 +1,7 @@
 package listdist
 
 import (
+	"iter"
 	"regexp"
 	"sync"
 
@@ -130,4 +131,17 @@ func (criteria *Criteria) unsafeAdd(criterion Criterion) {
 		criteria.dirty = map[CriterionKey]Criterion{}
 	}
 	criteria.dirty[criterion.Key()] = criterion
+}
+
+func (criteria *Criteria) filtered(associations iter.Seq[frontier.FunctionAssociation]) iter.Seq[frontier.FunctionAssociation] {
+	return func(yield func(frontier.FunctionAssociation) bool) {
+		for association := range associations {
+			if !criteria.Satisfy(association) {
+				continue
+			}
+			if !yield(association) {
+				return
+			}
+		}
+	}
 }
