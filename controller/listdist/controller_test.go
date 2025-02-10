@@ -10,6 +10,7 @@ import (
 	"github.com/aereal/frontier/controller/listdist"
 	"github.com/aereal/frontier/internal/cf"
 	"github.com/aereal/frontier/internal/cfmock"
+	"github.com/aereal/frontier/internal/testexpectations"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	"github.com/google/go-cmp/cmp"
@@ -28,13 +29,13 @@ func TestController_ListDistributions(t *testing.T) {
 			name:             "returned distriution that associated function in default cache behavior",
 			criteria:         listdist.NewCriteria(),
 			expectClient:     returnDist(distAssociatedInDefaultCacheBehavior),
-			wantAssociations: []frontier.FunctionAssociation{want1},
+			wantAssociations: []frontier.FunctionAssociation{testexpectations.FunctionAssociatedInDefaultCacheBehavior},
 		},
 		{
 			name:             "returned distriution that associated function in custom cache behavior",
 			criteria:         listdist.NewCriteria(),
 			expectClient:     returnDist(distAssociatedInCustomCacheBehavior),
-			wantAssociations: []frontier.FunctionAssociation{want2},
+			wantAssociations: []frontier.FunctionAssociation{testexpectations.FunctionAssociatedInCustomCacheBehavior},
 		},
 		{
 			name:         "AWS returned error",
@@ -99,44 +100,6 @@ func returnDist(dist types.DistributionSummary) func(m *cfmock.MockCloudFrontCli
 var (
 	functionArn = "arn:aws:cloudfront::123456789012:function/test-fn"
 
-	want1 = frontier.FunctionAssociation{
-		EventType: "viewer-request",
-		Distribution: frontier.AssociatedDistribution{
-			DomainName: "dist-1.test",
-			ID:         "dist-1",
-			ARN:        "arn:aws:cloudfront::123456789012:distribution/dist-1",
-			IsEnabled:  true,
-			IsStaging:  false,
-			Status:     "Deployed",
-		},
-		CacheBehavior: frontier.CacheBehavior{
-			IsDefault:      true,
-			CachePolicyID:  "default_policy_1",
-			TargetOriginID: "origin_1",
-		},
-		Function: frontier.AssociatedFunction{
-			ARN: functionArn,
-		},
-	}
-	want2 = frontier.FunctionAssociation{
-		EventType: "viewer-request",
-		Distribution: frontier.AssociatedDistribution{
-			DomainName: "dist-2.test",
-			ID:         "dist-2",
-			ARN:        "arn:aws:cloudfront::123456789012:distribution/dist-2",
-			IsEnabled:  true,
-			IsStaging:  false,
-			Status:     "Deployed",
-		},
-		CacheBehavior: frontier.CacheBehavior{
-			IsDefault:      false,
-			CachePolicyID:  "policy_1",
-			TargetOriginID: "origin_2",
-		},
-		Function: frontier.AssociatedFunction{
-			ARN: functionArn,
-		},
-	}
 	distAssociatedInDefaultCacheBehavior = types.DistributionSummary{
 		Id:             ref("dist-1"),
 		ARN:            ref("arn:aws:cloudfront::123456789012:distribution/dist-1"),
