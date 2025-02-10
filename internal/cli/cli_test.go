@@ -7,14 +7,42 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/controller/listdist"
 	"github.com/aereal/frontier/internal/cli"
+	"github.com/aereal/frontier/internal/fnarn"
+	"github.com/aereal/frontier/internal/testexpectations"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	gomock "go.uber.org/mock/gomock"
+)
+
+var (
+	fnNameDerivedFromConfig      = "test-func"
+	fnArnDerivedFromConfig       = "arn:aws:cloudfront::123456789012:function/" + fnNameDerivedFromConfig
+	associationDerivedFromConfig = frontier.FunctionAssociation{
+		EventType: "viewer-request",
+		Distribution: frontier.AssociatedDistribution{
+			DomainName: "dist-1.test",
+			ID:         "dist-1",
+			ARN:        "arn:aws:cloudfront::123456789012:distribution/dist-1",
+			IsEnabled:  true,
+			IsStaging:  false,
+			Status:     "Deployed",
+		},
+		CacheBehavior: frontier.CacheBehavior{
+			IsDefault:      true,
+			CachePolicyID:  "default_policy_1",
+			TargetOriginID: "origin_1",
+		},
+		Function: frontier.AssociatedFunction{
+			ARN: fnArnDerivedFromConfig,
+		},
+	}
 )
 
 func TestApp_Run(t *testing.T) {
@@ -82,10 +110,122 @@ func TestApp_Run(t *testing.T) {
 					Times(1)
 			},
 		},
+		{
+			args: []string{"dist", "list"},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				out := []frontier.FunctionAssociation{
+					testexpectations.FunctionAssociatedInDefaultCacheBehavior,
+				}
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), listdist.NewCriteria()).
+					Return(out, nil).
+					Times(1)
+			},
+		},
+		{
+			args: []string{"dist", "list", "--event-type", "viewer-request"},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				out := []frontier.FunctionAssociation{
+					testexpectations.FunctionAssociatedInDefaultCacheBehavior,
+				}
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), listdist.NewCriteria(listdist.EqualEventType("viewer-request"))).
+					Return(out, nil).
+					Times(1)
+			},
+		},
+		{
+			args: []string{"dist", "list", "--function-arn", testexpectations.FunctionArn},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				out := []frontier.FunctionAssociation{
+					testexpectations.FunctionAssociatedInDefaultCacheBehavior,
+				}
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), listdist.NewCriteria(listdist.EqualFunctionArn(testexpectations.FunctionArn))).
+					Return(out, nil).
+					Times(1)
+			},
+		},
+		{
+			args: []string{"dist", "list", "--function-name", testexpectations.FunctionName},
+			expectFunctionARNResolver: func(m *mockWithLogger[*cli.MockFunctionARNResolver]) {
+				m.M.EXPECT().
+					ResolveFunctionARN(gomock.Any(), fnarn.FunctionName(testexpectations.FunctionName)).
+					Return(testexpectations.FunctionArn, nil).
+					Times(1)
+			},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				out := []frontier.FunctionAssociation{
+					testexpectations.FunctionAssociatedInDefaultCacheBehavior,
+				}
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), listdist.NewCriteria(listdist.EqualFunctionArn(testexpectations.FunctionArn))).
+					Return(out, nil).
+					Times(1)
+			},
+		},
+		{
+			args: []string{"dist", "list", "--function-name", testexpectations.FunctionName},
+			expectFunctionARNResolver: func(m *mockWithLogger[*cli.MockFunctionARNResolver]) {
+				m.M.EXPECT().
+					ResolveFunctionARN(gomock.Any(), fnarn.FunctionName(testexpectations.FunctionName)).
+					Return("", &literalError{"oops"}).
+					Times(1)
+			},
+			expect: testSubommandExpectation{err: &literalError{"oops"}},
+		},
+		{
+			args: []string{"dist", "list", "--config", configPath, "--current"},
+			expectFunctionARNResolver: func(m *mockWithLogger[*cli.MockFunctionARNResolver]) {
+				m.M.EXPECT().
+					ResolveFunctionARN(gomock.Any(), fnarn.FunctionName(fnNameDerivedFromConfig)).
+					Return(fnArnDerivedFromConfig, nil).
+					Times(1)
+			},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				out := []frontier.FunctionAssociation{associationDerivedFromConfig}
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), listdist.NewCriteria(listdist.EqualFunctionArn(fnArnDerivedFromConfig))).
+					Return(out, nil).
+					Times(1)
+			},
+		},
+		{
+			args: []string{"dist", "list", "--config", configPath, "--current"},
+			expectFunctionARNResolver: func(m *mockWithLogger[*cli.MockFunctionARNResolver]) {
+				m.M.EXPECT().
+					ResolveFunctionARN(gomock.Any(), fnarn.FunctionName(fnNameDerivedFromConfig)).
+					Return("", &literalError{"oops"}).
+					Times(1)
+			},
+			expect: testSubommandExpectation{err: &literalError{"oops"}},
+		},
+		{
+			args:   []string{"dist", "list", "--config", "not_found.yml", "--current"},
+			expect: testSubommandExpectation{&literalError{"os.Open: open not_found.yml: no such file or directory"}},
+		},
+		{
+			args: []string{"dist", "list", "--format", "unknown"},
+			expect: testSubommandExpectation{
+				err: &literalError{`invalid value "unknown" for flag -format: invalid output format: "unknown"`},
+			},
+		},
+		{
+			args: []string{"dist", "list"},
+			expectListDistributions: func(m *mockWithLogger[*cli.MockListDistributionsController]) {
+				m.M.EXPECT().
+					ListDistributions(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, &literalError{"oops"}).
+					Times(1)
+			},
+			expect: testSubommandExpectation{
+				err: &literalError{"oops"},
+			},
+		},
 	}
-	for _, tc := range tcs {
+	for idx, tc := range tcs {
 		tc := tc
-		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+		t.Run(strconv.Itoa(idx)+strings.Join(tc.args, " "), func(t *testing.T) {
 			testSubcommand(t, tc)
 		})
 	}
@@ -133,11 +273,13 @@ type testLogger interface {
 }
 
 type testSubcommandArgs struct {
-	expectDeploy func(m *mockWithLogger[*cli.MockDeployController])
-	expectImport func(m *mockWithLogger[*cli.MockImportController])
-	expectRender func(m *mockWithLogger[*cli.MockRenderController])
-	args         []string
-	expect       testSubommandExpectation
+	expectDeploy              func(m *mockWithLogger[*cli.MockDeployController])
+	expectImport              func(m *mockWithLogger[*cli.MockImportController])
+	expectRender              func(m *mockWithLogger[*cli.MockRenderController])
+	expectListDistributions   func(m *mockWithLogger[*cli.MockListDistributionsController])
+	expectFunctionARNResolver func(m *mockWithLogger[*cli.MockFunctionARNResolver])
+	args                      []string
+	expect                    testSubommandExpectation
 }
 
 type testSubommandExpectation struct {
@@ -154,10 +296,12 @@ func testSubcommand(t *testing.T, args testSubcommandArgs) {
 	deployCtrl := cli.NewMockDeployController(ctrl)
 	importCtrl := cli.NewMockImportController(ctrl)
 	renderCtrl := cli.NewMockRenderController(ctrl)
+	listDistsCtrl := cli.NewMockListDistributionsController(ctrl)
 	controllers := cli.Controllers{
-		DeployController: deployCtrl,
-		ImportController: importCtrl,
-		RenderController: renderCtrl,
+		DeployController:            deployCtrl,
+		ImportController:            importCtrl,
+		RenderController:            renderCtrl,
+		ListDistributionsController: listDistsCtrl,
 	}
 	if args.expectDeploy != nil {
 		args.expectDeploy(&mockWithLogger[*cli.MockDeployController]{M: deployCtrl, Logger: t})
@@ -168,7 +312,19 @@ func testSubcommand(t *testing.T, args testSubcommandArgs) {
 	if args.expectRender != nil {
 		args.expectRender(&mockWithLogger[*cli.MockRenderController]{M: renderCtrl, Logger: t})
 	}
-	app := cli.New(stdin, stdout, stderr, controllers)
+	if args.expectListDistributions != nil {
+		m := &mockWithLogger[*cli.MockListDistributionsController]{M: listDistsCtrl, Logger: t}
+		args.expectListDistributions(m)
+	}
+	arnResolver := cli.NewMockFunctionARNResolver(ctrl)
+	if args.expectFunctionARNResolver != nil {
+		m := &mockWithLogger[*cli.MockFunctionARNResolver]{
+			M:      arnResolver,
+			Logger: t,
+		}
+		args.expectFunctionARNResolver(m)
+	}
+	app := cli.New(stdin, stdout, stderr, controllers, arnResolver)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	if deadline, ok := t.Deadline(); ok {

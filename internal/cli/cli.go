@@ -39,19 +39,21 @@ type Controllers struct {
 	ImportController
 	DeployController
 	RenderController
+	ListDistributionsController
 }
 
 type FunctionARNResolver interface {
 	ResolveFunctionARN(ctx context.Context, identifier fnarn.FunctionIdentifier) (string, error)
 }
 
-func New(input io.Reader, output, errOutput io.Writer, controllers Controllers) *App {
+func New(input io.Reader, output, errOutput io.Writer, controllers Controllers, arnResolver FunctionARNResolver) *App {
 	return &App{
 		input:         input,
 		output:        output,
 		errOutput:     errOutput,
 		controllers:   controllers,
 		shouldPublish: true,
+		arnResolver:   arnResolver,
 	}
 }
 
@@ -61,6 +63,7 @@ type App struct {
 	errOutput     io.Writer
 	controllers   Controllers
 	shouldPublish bool
+	arnResolver   FunctionARNResolver
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
@@ -80,6 +83,7 @@ func (a *App) Run(ctx context.Context, args []string) error {
 			a.cmdRender(),
 			a.cmdDeploy(),
 			a.cmdImport(),
+			a.cmdDist(),
 		},
 	}
 	for _, c := range cmd.Commands {

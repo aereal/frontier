@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	functionArn = "arn:aws:cloudfront::123456789012:function/test-fn"
+	FunctionName = "test-fn"
+	FunctionArn  = "arn:aws:cloudfront::123456789012:function/" + FunctionName
 
 	FunctionAssociatedInDefaultCacheBehavior = frontier.FunctionAssociation{
 		EventType: "viewer-request",
@@ -23,7 +24,7 @@ var (
 			TargetOriginID: "origin_1",
 		},
 		Function: frontier.AssociatedFunction{
-			ARN: functionArn,
+			ARN: FunctionArn,
 		},
 	}
 	FunctionAssociatedInCustomCacheBehavior = frontier.FunctionAssociation{
@@ -42,7 +43,7 @@ var (
 			TargetOriginID: "origin_2",
 		},
 		Function: frontier.AssociatedFunction{
-			ARN: functionArn,
+			ARN: FunctionArn,
 		},
 	}
 )
