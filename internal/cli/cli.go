@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController
+//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController,FunctionARNResolver
 
 package cli
 
@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/internal/fnarn"
 	cli "github.com/urfave/cli/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -33,6 +34,10 @@ type Controllers struct {
 	ImportController
 	DeployController
 	RenderController
+}
+
+type FunctionARNResolver interface {
+	ResolveFunctionARN(ctx context.Context, identifier fnarn.FunctionIdentifier) (string, error)
 }
 
 func New(input io.Reader, output, errOutput io.Writer, controllers Controllers) *App {

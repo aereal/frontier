@@ -10,6 +10,7 @@ import (
 	reflect "reflect"
 
 	frontier "github.com/aereal/frontier"
+	fnarn "github.com/aereal/frontier/internal/fnarn"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -195,6 +196,69 @@ func (c *MockRenderControllerRenderCall) Do(f func(context.Context, string, io.W
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockRenderControllerRenderCall) DoAndReturn(f func(context.Context, string, io.Writer) error) *MockRenderControllerRenderCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockFunctionARNResolver is a mock of FunctionARNResolver interface.
+type MockFunctionARNResolver struct {
+	ctrl     *gomock.Controller
+	recorder *MockFunctionARNResolverMockRecorder
+	isgomock struct{}
+}
+
+// MockFunctionARNResolverMockRecorder is the mock recorder for MockFunctionARNResolver.
+type MockFunctionARNResolverMockRecorder struct {
+	mock *MockFunctionARNResolver
+}
+
+// NewMockFunctionARNResolver creates a new mock instance.
+func NewMockFunctionARNResolver(ctrl *gomock.Controller) *MockFunctionARNResolver {
+	mock := &MockFunctionARNResolver{ctrl: ctrl}
+	mock.recorder = &MockFunctionARNResolverMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFunctionARNResolver) EXPECT() *MockFunctionARNResolverMockRecorder {
+	return m.recorder
+}
+
+// ResolveFunctionARN mocks base method.
+func (m *MockFunctionARNResolver) ResolveFunctionARN(ctx context.Context, identifier fnarn.FunctionIdentifier) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFunctionARN", ctx, identifier)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFunctionARN indicates an expected call of ResolveFunctionARN.
+func (mr *MockFunctionARNResolverMockRecorder) ResolveFunctionARN(ctx, identifier any) *MockFunctionARNResolverResolveFunctionARNCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFunctionARN", reflect.TypeOf((*MockFunctionARNResolver)(nil).ResolveFunctionARN), ctx, identifier)
+	return &MockFunctionARNResolverResolveFunctionARNCall{Call: call}
+}
+
+// MockFunctionARNResolverResolveFunctionARNCall wrap *gomock.Call
+type MockFunctionARNResolverResolveFunctionARNCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockFunctionARNResolverResolveFunctionARNCall) Return(arg0 string, arg1 error) *MockFunctionARNResolverResolveFunctionARNCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockFunctionARNResolverResolveFunctionARNCall) Do(f func(context.Context, fnarn.FunctionIdentifier) (string, error)) *MockFunctionARNResolverResolveFunctionARNCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockFunctionARNResolverResolveFunctionARNCall) DoAndReturn(f func(context.Context, fnarn.FunctionIdentifier) (string, error)) *MockFunctionARNResolverResolveFunctionARNCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
