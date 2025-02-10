@@ -1,6 +1,7 @@
 package frontier
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +11,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func parseConfigFromPath(configPath string) (*Function, error) {
+type MissingFunctionNameError struct{}
+
+func (MissingFunctionNameError) Error() string { return "name is required" }
+
+func (MissingFunctionNameError) Is(err error) bool {
+	var fnrErr MissingFunctionNameError
+	return errors.As(err, &fnrErr)
+}
+
+func ParseConfigFromPath(configPath string) (*Function, error) {
 	f, err := os.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open: %w", err)
@@ -19,6 +29,9 @@ func parseConfigFromPath(configPath string) (*Function, error) {
 	fn := new(Function)
 	if err := yaml.NewDecoder(f).Decode(fn); err != nil {
 		return nil, fmt.Errorf("yaml.Decoder.Decode: %w", err)
+	}
+	if fn.Name == "" {
+		return nil, MissingFunctionNameError{}
 	}
 	return fn, nil
 }
@@ -79,4 +92,30 @@ func (fn *Function) toUpdateInput(etag *string) (*cloudfront.UpdateFunctionInput
 type FunctionConfig struct {
 	Comment string                `yaml:"comment"`
 	Runtime types.FunctionRuntime `yaml:"runtime"`
+}
+
+type AssociatedDistribution struct {
+	DomainName string
+	ARN        string
+	ID         string
+	IsEnabled  bool
+	IsStaging  bool
+	Status     string
+}
+
+type CacheBehavior struct {
+	CachePolicyID  string
+	TargetOriginID string
+	IsDefault      bool
+}
+
+type AssociatedFunction struct {
+	ARN string
+}
+
+type FunctionAssociation struct {
+	Distribution  AssociatedDistribution
+	CacheBehavior CacheBehavior
+	EventType     string
+	Function      AssociatedFunction
 }

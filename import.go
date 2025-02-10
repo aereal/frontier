@@ -6,18 +6,19 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aereal/frontier/internal/cf"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 )
 
-func NewImporter(clientProvider CloudFrontClientProvider) *Importer {
+func NewImporter(clientProvider cf.Provider) *Importer {
 	return &Importer{
 		clientProvider: clientProvider,
 	}
 }
 
 type Importer struct {
-	clientProvider CloudFrontClientProvider
+	clientProvider cf.Provider
 }
 
 func (i *Importer) Import(ctx context.Context, functionName string, configStream io.Writer, functionStream *WritableFile) error {

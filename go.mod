@@ -1,10 +1,11 @@
 module github.com/aereal/frontier
 
-go 1.22.7
+go 1.23.0
 
 toolchain go1.23.6
 
 require (
+	github.com/aereal/iter v0.5.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.6
 	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.44.9
 	github.com/aws/smithy-go v1.22.2

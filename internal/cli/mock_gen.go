@@ -10,6 +10,8 @@ import (
 	reflect "reflect"
 
 	frontier "github.com/aereal/frontier"
+	listdist "github.com/aereal/frontier/controller/listdist"
+	fnarn "github.com/aereal/frontier/internal/fnarn"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -195,6 +197,132 @@ func (c *MockRenderControllerRenderCall) Do(f func(context.Context, string, io.W
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockRenderControllerRenderCall) DoAndReturn(f func(context.Context, string, io.Writer) error) *MockRenderControllerRenderCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockListDistributionsController is a mock of ListDistributionsController interface.
+type MockListDistributionsController struct {
+	ctrl     *gomock.Controller
+	recorder *MockListDistributionsControllerMockRecorder
+	isgomock struct{}
+}
+
+// MockListDistributionsControllerMockRecorder is the mock recorder for MockListDistributionsController.
+type MockListDistributionsControllerMockRecorder struct {
+	mock *MockListDistributionsController
+}
+
+// NewMockListDistributionsController creates a new mock instance.
+func NewMockListDistributionsController(ctrl *gomock.Controller) *MockListDistributionsController {
+	mock := &MockListDistributionsController{ctrl: ctrl}
+	mock.recorder = &MockListDistributionsControllerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockListDistributionsController) EXPECT() *MockListDistributionsControllerMockRecorder {
+	return m.recorder
+}
+
+// ListDistributions mocks base method.
+func (m *MockListDistributionsController) ListDistributions(ctx context.Context, output io.Writer, criteria *listdist.Criteria) ([]frontier.FunctionAssociation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDistributions", ctx, output, criteria)
+	ret0, _ := ret[0].([]frontier.FunctionAssociation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDistributions indicates an expected call of ListDistributions.
+func (mr *MockListDistributionsControllerMockRecorder) ListDistributions(ctx, output, criteria any) *MockListDistributionsControllerListDistributionsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDistributions", reflect.TypeOf((*MockListDistributionsController)(nil).ListDistributions), ctx, output, criteria)
+	return &MockListDistributionsControllerListDistributionsCall{Call: call}
+}
+
+// MockListDistributionsControllerListDistributionsCall wrap *gomock.Call
+type MockListDistributionsControllerListDistributionsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockListDistributionsControllerListDistributionsCall) Return(arg0 []frontier.FunctionAssociation, arg1 error) *MockListDistributionsControllerListDistributionsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockListDistributionsControllerListDistributionsCall) Do(f func(context.Context, io.Writer, *listdist.Criteria) ([]frontier.FunctionAssociation, error)) *MockListDistributionsControllerListDistributionsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockListDistributionsControllerListDistributionsCall) DoAndReturn(f func(context.Context, io.Writer, *listdist.Criteria) ([]frontier.FunctionAssociation, error)) *MockListDistributionsControllerListDistributionsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockFunctionARNResolver is a mock of FunctionARNResolver interface.
+type MockFunctionARNResolver struct {
+	ctrl     *gomock.Controller
+	recorder *MockFunctionARNResolverMockRecorder
+	isgomock struct{}
+}
+
+// MockFunctionARNResolverMockRecorder is the mock recorder for MockFunctionARNResolver.
+type MockFunctionARNResolverMockRecorder struct {
+	mock *MockFunctionARNResolver
+}
+
+// NewMockFunctionARNResolver creates a new mock instance.
+func NewMockFunctionARNResolver(ctrl *gomock.Controller) *MockFunctionARNResolver {
+	mock := &MockFunctionARNResolver{ctrl: ctrl}
+	mock.recorder = &MockFunctionARNResolverMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFunctionARNResolver) EXPECT() *MockFunctionARNResolverMockRecorder {
+	return m.recorder
+}
+
+// ResolveFunctionARN mocks base method.
+func (m *MockFunctionARNResolver) ResolveFunctionARN(ctx context.Context, identifier fnarn.FunctionIdentifier) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFunctionARN", ctx, identifier)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFunctionARN indicates an expected call of ResolveFunctionARN.
+func (mr *MockFunctionARNResolverMockRecorder) ResolveFunctionARN(ctx, identifier any) *MockFunctionARNResolverResolveFunctionARNCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFunctionARN", reflect.TypeOf((*MockFunctionARNResolver)(nil).ResolveFunctionARN), ctx, identifier)
+	return &MockFunctionARNResolverResolveFunctionARNCall{Call: call}
+}
+
+// MockFunctionARNResolverResolveFunctionARNCall wrap *gomock.Call
+type MockFunctionARNResolverResolveFunctionARNCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockFunctionARNResolverResolveFunctionARNCall) Return(arg0 string, arg1 error) *MockFunctionARNResolverResolveFunctionARNCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockFunctionARNResolverResolveFunctionARNCall) Do(f func(context.Context, fnarn.FunctionIdentifier) (string, error)) *MockFunctionARNResolverResolveFunctionARNCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockFunctionARNResolverResolveFunctionARNCall) DoAndReturn(f func(context.Context, fnarn.FunctionIdentifier) (string, error)) *MockFunctionARNResolverResolveFunctionARNCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

@@ -4,21 +4,22 @@ import (
 	"context"
 	"errors"
 
+	"github.com/aereal/frontier/internal/cf"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 )
 
 type Deployer struct {
-	clientProvider CloudFrontClientProvider
+	clientProvider cf.Provider
 }
 
-func NewDeployer(clientProvider CloudFrontClientProvider) *Deployer {
+func NewDeployer(clientProvider cf.Provider) *Deployer {
 	d := &Deployer{clientProvider: clientProvider}
 	return d
 }
 
 func (d *Deployer) Deploy(ctx context.Context, configPath string, publish bool) error {
-	fn, err := parseConfigFromPath(configPath)
+	fn, err := ParseConfigFromPath(configPath)
 	if err != nil {
 		return err
 	}

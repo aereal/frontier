@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./command_mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController
+//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController,ListDistributionsController,FunctionARNResolver
 
 package cli
 
@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/controller/listdist"
+	"github.com/aereal/frontier/internal/fnarn"
 	cli "github.com/urfave/cli/v3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -29,19 +31,29 @@ type RenderController interface {
 	Render(ctx context.Context, configPath string, output io.Writer) error
 }
 
+type ListDistributionsController interface {
+	ListDistributions(ctx context.Context, output io.Writer, criteria *listdist.Criteria) ([]frontier.FunctionAssociation, error)
+}
+
 type Controllers struct {
 	ImportController
 	DeployController
 	RenderController
+	ListDistributionsController
 }
 
-func New(input io.Reader, output, errOutput io.Writer, controllers Controllers) *App {
+type FunctionARNResolver interface {
+	ResolveFunctionARN(ctx context.Context, identifier fnarn.FunctionIdentifier) (string, error)
+}
+
+func New(input io.Reader, output, errOutput io.Writer, controllers Controllers, arnResolver FunctionARNResolver) *App {
 	return &App{
 		input:         input,
 		output:        output,
 		errOutput:     errOutput,
 		controllers:   controllers,
 		shouldPublish: true,
+		arnResolver:   arnResolver,
 	}
 }
 
@@ -51,6 +63,7 @@ type App struct {
 	errOutput     io.Writer
 	controllers   Controllers
 	shouldPublish bool
+	arnResolver   FunctionARNResolver
 }
 
 func (a *App) Run(ctx context.Context, args []string) error {
@@ -70,6 +83,7 @@ func (a *App) Run(ctx context.Context, args []string) error {
 			a.cmdRender(),
 			a.cmdDeploy(),
 			a.cmdImport(),
+			a.cmdDist(),
 		},
 	}
 	for _, c := range cmd.Commands {

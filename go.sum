@@ -1,3 +1,5 @@
+github.com/aereal/iter v0.5.0 h1:BnubKUBBPMWcK+6ril51dP0A1JbWZ7ocvle5N4zPyCE=
+github.com/aereal/iter v0.5.0/go.mod h1:90HlBmkcrMPBtQQoIfQWMlAmYXLuNuoYncn8P042b20=
 github.com/aws/aws-sdk-go-v2 v1.36.1 h1:iTDl5U6oAhkNPba0e1t1hrwAo02ZMqbrGq4k5JBWM5E=
 github.com/aws/aws-sdk-go-v2 v1.36.1/go.mod h1:5PMILGVKiW32oDzjj6RU52yrNrDPUHcbZQYr1sM7qmM=
 github.com/aws/aws-sdk-go-v2/config v1.29.6 h1:fqgqEKK5HaZVWLQoLiC9Q+xDlSp+1LYidp6ybGE2OGg=

@@ -12,7 +12,7 @@ func NewRenderer() *Renderer {
 type Renderer struct{}
 
 func (r *Renderer) Render(ctx context.Context, configPath string, output io.Writer) error {
-	fn, err := parseConfigFromPath(configPath)
+	fn, err := ParseConfigFromPath(configPath)
 	if err != nil {
 		return err
 	}
