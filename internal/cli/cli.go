@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController,FunctionARNResolver
+//go:generate go run go.uber.org/mock/mockgen -build_constraint !live -typed -write_command_comment=false -write_package_comment=false -write_source_comment=false -package cli -destination ./mock_gen.go github.com/aereal/frontier/internal/cli DeployController,ImportController,RenderController,ListDistributionsController,FunctionARNResolver
 
 package cli
 
@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/aereal/frontier"
+	"github.com/aereal/frontier/controller/listdist"
 	"github.com/aereal/frontier/internal/fnarn"
 	cli "github.com/urfave/cli/v3"
 	"go.opentelemetry.io/otel"
@@ -28,6 +29,10 @@ type DeployController interface {
 
 type RenderController interface {
 	Render(ctx context.Context, configPath string, output io.Writer) error
+}
+
+type ListDistributionsController interface {
+	ListDistributions(ctx context.Context, output io.Writer, criteria *listdist.Criteria) ([]frontier.FunctionAssociation, error)
 }
 
 type Controllers struct {
