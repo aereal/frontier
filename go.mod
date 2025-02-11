@@ -2,7 +2,7 @@ module github.com/aereal/frontier
 
 go 1.23.0
 
-toolchain go1.23.6
+toolchain go1.24.0
 
 require (
 	github.com/aereal/iter v0.5.0
