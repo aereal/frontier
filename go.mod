@@ -7,7 +7,7 @@ toolchain go1.23.6
 require (
 	github.com/aereal/iter v0.5.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.7
-	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.44.11
+	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.44.12
 	github.com/aws/smithy-go v1.22.3
 	github.com/google/go-cmp v0.6.0
 	github.com/urfave/cli/v3 v3.0.0-beta1
